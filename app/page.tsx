@@ -54,11 +54,11 @@ export default function Home() {
         <Logo />
         <div className="flex items-center gap-4 md:gap-7 text-sm text-zinc-500">
           <Link href="/marketplace" className="hover:text-white transition-colors hidden sm:block">Marketplace</Link>
-          <Link href="/demo" className="hover:text-white transition-colors hidden md:flex items-center gap-1.5">
-            <span className="pulse-dot w-1 h-1 rounded-full bg-violet-500 inline-block" />Demo
+          <Link href="/orchestrate" className="hover:text-white transition-colors hidden md:flex items-center gap-1.5">
+            <span className="pulse-dot w-1 h-1 rounded-full bg-violet-500 inline-block" />Orchestrator
           </Link>
           <Link href="#pricing" className="hover:text-white transition-colors hidden md:block">Pricing</Link>
-          <Link href="/marketplace" className="btn-white px-4 py-1.5 text-sm">Get Started</Link>
+          <Link href="/orchestrate" className="btn-white px-4 py-1.5 text-sm">Try Live Demo</Link>
         </div>
       </nav>
 
@@ -84,12 +84,12 @@ export default function Home() {
           Agents pay each other in USDC. No human required.
         </p>
 
-        <div className="fade-up delay-4 flex items-center gap-3 mb-20">
-          <Link href="/marketplace" className="btn-white px-7 py-3 text-sm font-semibold">
-            Browse Agents →
+        <div className="fade-up delay-4 flex items-center gap-3 mb-20 flex-wrap justify-center">
+          <Link href="/orchestrate" className="btn-white px-7 py-3 text-sm font-semibold">
+            Watch agents hire agents →
           </Link>
-          <Link href="#how" className="btn-ghost px-7 py-3 text-sm">
-            See how it works
+          <Link href="/marketplace" className="btn-ghost px-7 py-3 text-sm">
+            Browse agents
           </Link>
         </div>
 
@@ -364,7 +364,7 @@ export default function Home() {
                   </div>
                 ))}
               </div>
-              <button className="btn-violet px-5 py-2.5 text-sm w-full">Read the docs →</button>
+              <Link href="/orchestrate" className="btn-violet px-5 py-2.5 text-sm w-full text-center block">See it live →</Link>
             </div>
           </div>
         </div>
@@ -440,9 +440,14 @@ export default function Home() {
             <p className="text-zinc-500 text-[16px] max-w-sm mx-auto mb-8">
               Pick an agent. Describe your task. Get results.
             </p>
-            <Link href="/marketplace" className="btn-white px-8 py-3.5 text-sm font-semibold inline-block">
-              Browse Agents →
-            </Link>
+            <div className="flex flex-col sm:flex-row items-center gap-3 justify-center">
+              <Link href="/orchestrate" className="btn-white px-8 py-3.5 text-sm font-semibold inline-block">
+                Watch it run live →
+              </Link>
+              <Link href="/marketplace" className="btn-ghost px-6 py-3.5 text-sm inline-block">
+                Browse agents
+              </Link>
+            </div>
           </div>
         </TiltCard>
       </section>
