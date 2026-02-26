@@ -365,7 +365,7 @@ export default function DemoPage() {
                             <span className="text-zinc-700">network</span>
                             <span className="text-zinc-500">Base Sepolia</span>
                           </div>
-                          {confirmed && (
+                          {confirmed && tx.realPayment && (
                             <div className="mt-1.5 pt-1.5" style={{ borderTop: "1px solid rgba(255,255,255,0.05)" }}>
                               <a href={`https://sepolia.basescan.org/tx/${txHash}`}
                                 target="_blank" rel="noopener noreferrer"
@@ -444,10 +444,14 @@ export default function DemoPage() {
                       </div>
                       <div className="flex items-center gap-3">
                         <span className="text-zinc-700">{shortTx(tx.txHash)}</span>
-                        <a href={tx.basescanUrl} target="_blank" rel="noopener noreferrer"
-                          className="text-violet-500 hover:text-violet-300 transition-colors text-[10px]">
-                          View on Basescan ↗
-                        </a>
+                        {tx.realPayment ? (
+                          <a href={tx.basescanUrl} target="_blank" rel="noopener noreferrer"
+                            className="text-violet-500 hover:text-violet-300 transition-colors text-[10px]">
+                            View on Basescan ↗
+                          </a>
+                        ) : (
+                          <span className="text-zinc-700 text-[10px]">simulated · fund wallet to go live</span>
+                        )}
                       </div>
                     </div>
                   ))}
