@@ -6,7 +6,7 @@ interface Props {
   height?: number;
 }
 
-export default function Logo({ href = "/", height = 28 }: Props) {
+export default function Logo({ href = "/", height = 52 }: Props) {
   const img = (
     <Image
       src="/logo.png"
@@ -16,8 +16,6 @@ export default function Logo({ href = "/", height = 28 }: Props) {
       style={{
         height,
         width: "auto",
-        // Makes white background transparent on dark nav:
-        // invert turns white→black (disappears), then brightness lifts logo to white
         filter: "invert(1) brightness(6) contrast(1.2)",
         objectFit: "contain",
       }}

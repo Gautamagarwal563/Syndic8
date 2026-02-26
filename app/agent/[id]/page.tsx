@@ -36,6 +36,30 @@ const agentData: Record<string, {
     examples: ["Sam Altman, OpenAI", "Garry Tan, YC", "Jensen Huang, NVIDIA"],
     color: "rgba(245,158,11,0.12)",
   },
+  "competitor-analysis": {
+    name: "Competitor Analysis Agent", description: "Company or product in. Sharp competitive breakdown out — who wins, who's exposed.",
+    icon: "⚔️", price: "$1.50", priceInt: 150,
+    placeholder: "e.g. Linear vs Jira, or just: Perplexity AI",
+    inputLabel: "Company or product to analyze", speed: "~18s",
+    examples: ["Linear vs Jira", "Perplexity AI", "Cursor"],
+    color: "rgba(239,68,68,0.1)",
+  },
+  "investor-research": {
+    name: "Investor Research Agent", description: "VC firm or investor name in. Their thesis, portfolio, and what they actually fund — out.",
+    icon: "💼", price: "$1.00", priceInt: 100,
+    placeholder: "e.g. Sequoia Capital, or Garry Tan",
+    inputLabel: "Investor or VC firm name", speed: "~15s",
+    examples: ["Sequoia Capital", "Garry Tan", "a16z"],
+    color: "rgba(59,130,246,0.1)",
+  },
+  "startup-validator": {
+    name: "Startup Idea Validator", description: "Your idea in. Brutally honest YC-style feedback on market, competition, and risks — out.",
+    icon: "🚀", price: "$0.75", priceInt: 75,
+    placeholder: "e.g. An AI marketplace where agents hire other agents",
+    inputLabel: "Describe your startup idea", speed: "~12s",
+    examples: ["AI agent marketplace", "B2B Slack analytics tool", "No-code Shopify builder"],
+    color: "rgba(168,85,247,0.12)",
+  },
 };
 
 // ── Prose renderer ──────────────────────────────────────
@@ -90,10 +114,16 @@ export default function AgentPage() {
   const [result, setResult] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [shared, setShared] = useState(false);
   const [isStreaming, setIsStreaming] = useState(false);
   const [paymentStatus, setPaymentStatus] = useState<"idle" | "verifying" | "paid" | "failed">("idle");
   const resultRef = useRef<HTMLDivElement>(null);
   const stripeEnabled = !!process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
+  const qParam = searchParams.get("q");
+  useEffect(() => {
+    if (qParam && !input) setInput(decodeURIComponent(qParam));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [qParam]);
 
   // Handle Stripe redirect return
   const sessionId = searchParams.get("session_id");
@@ -188,6 +218,25 @@ export default function AgentPage() {
     navigator.clipboard.writeText(result);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  }
+
+  function handleExport() {
+    if (!result) return;
+    const header = `# ${agent.name} — Syndic8\n**Query:** ${input}\n**Date:** ${new Date().toLocaleDateString()}\n\n---\n\n`;
+    const blob = new Blob([header + result], { type: "text/markdown" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `syndic8-${id}-${Date.now()}.md`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  function handleShare() {
+    const url = `${window.location.origin}/agent/${id}?q=${encodeURIComponent(input)}`;
+    navigator.clipboard.writeText(url);
+    setShared(true);
+    setTimeout(() => setShared(false), 2500);
   }
 
   if (!agent) {
@@ -354,10 +403,20 @@ export default function AgentPage() {
                 )}
               </div>
               {!isStreaming && (
-                <button onClick={handleCopy}
-                  className="text-xs text-zinc-600 hover:text-white transition-colors">
-                  {copied ? "✓ Copied" : "Copy report"}
-                </button>
+                <div className="flex items-center gap-4">
+                  <button onClick={handleCopy}
+                    className="text-xs text-zinc-600 hover:text-white transition-colors">
+                    {copied ? "✓ Copied" : "Copy"}
+                  </button>
+                  <button onClick={handleExport}
+                    className="text-xs text-zinc-600 hover:text-white transition-colors">
+                    Export .md
+                  </button>
+                  <button onClick={handleShare}
+                    className="text-xs text-zinc-600 hover:text-violet-400 transition-colors">
+                    {shared ? "✓ Link copied" : "Share"}
+                  </button>
+                </div>
               )}
             </div>
             <div className="p-7" style={{ background: "rgba(0,0,0,0.3)" }}>

@@ -149,7 +149,7 @@ export default function Home() {
       <section className="relative max-w-4xl mx-auto px-6 py-20">
         <div className="grid grid-cols-3 gap-5">
           {[
-            { end: 3, suffix: "", label: "Live agents", sub: "More coming soon" },
+            { end: 6, suffix: "", label: "Live agents", sub: "More coming soon" },
             { end: 10, suffix: "s", label: "Avg response time", sub: "Per task" },
             { end: 2, suffix: "", label: "Payment rails", sub: "Stripe + USDC on Base" },
           ].map((s) => (
@@ -271,9 +271,12 @@ export default function Home() {
 
         <div className="grid grid-cols-3 gap-4">
           {[
-            { id: "web-research", icon: "🔍", name: "Web Research", desc: "Any question → sourced report.", price: "$0.50", speed: "~8s", color: "rgba(99,102,241,0.15)" },
-            { id: "due-diligence", icon: "📊", name: "Due Diligence", desc: "Company name → investor-grade brief.", price: "$2.00", speed: "~20s", color: "rgba(16,185,129,0.1)" },
+            { id: "web-research", icon: "🔍", name: "Web Research", desc: "Any question → sourced brief.", price: "$0.50", speed: "~8s", color: "rgba(99,102,241,0.15)" },
+            { id: "competitor-analysis", icon: "⚔️", name: "Competitor Analysis", desc: "Company → competitive breakdown.", price: "$1.50", speed: "~18s", color: "rgba(239,68,68,0.12)" },
+            { id: "investor-research", icon: "💼", name: "Investor Research", desc: "VC name → thesis + portfolio.", price: "$1.00", speed: "~15s", color: "rgba(59,130,246,0.12)" },
+            { id: "due-diligence", icon: "📊", name: "Due Diligence", desc: "Company → investor-grade brief.", price: "$2.00", speed: "~20s", color: "rgba(16,185,129,0.1)" },
             { id: "lead-enrichment", icon: "🎯", name: "Lead Enrichment", desc: "Name + company → enriched profile.", price: "$0.25", speed: "~6s", color: "rgba(245,158,11,0.1)" },
+            { id: "startup-validator", icon: "🚀", name: "Startup Validator", desc: "Idea → YC-style brutal feedback.", price: "$0.75", speed: "~12s", color: "rgba(168,85,247,0.12)" },
           ].map((a) => (
             <Link key={a.id} href={`/agent/${a.id}`}>
               <TiltCard
