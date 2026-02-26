@@ -1,28 +1,29 @@
-import Image from "next/image";
 import Link from "next/link";
 
 interface Props {
   href?: string;
-  height?: number;
 }
 
-export default function Logo({ href = "/", height = 52 }: Props) {
-  const img = (
-    <Image
-      src="/logo.png"
-      alt="Syndic8"
-      width={height * 3.2}
-      height={height}
+export default function Logo({ href = "/" }: Props) {
+  const text = (
+    <span
       style={{
-        height,
-        width: "auto",
-        filter: "invert(1) brightness(6) contrast(1.2)",
-        objectFit: "contain",
+        fontFamily: "inherit",
+        fontSize: "22px",
+        fontWeight: 700,
+        letterSpacing: "-0.03em",
+        color: "#fff",
+        lineHeight: 1,
       }}
-      priority
-    />
+    >
+      Syndic<span style={{ fontSize: "26px", lineHeight: 1 }}>∞</span>
+    </span>
   );
 
-  if (!href) return img;
-  return <Link href={href} className="flex items-center">{img}</Link>;
+  if (!href) return text;
+  return (
+    <Link href={href} className="flex items-center">
+      {text}
+    </Link>
+  );
 }
