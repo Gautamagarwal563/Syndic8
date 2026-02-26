@@ -32,8 +32,10 @@ export default function Home() {
         <span className="text-[15px] font-semibold tracking-tight">Syndic8</span>
         <div className="flex items-center gap-7 text-sm text-zinc-500">
           <Link href="/marketplace" className="hover:text-white transition-colors">Marketplace</Link>
+          <Link href="/demo" className="hover:text-white transition-colors flex items-center gap-1.5">
+            <span className="pulse-dot w-1 h-1 rounded-full bg-violet-500 inline-block" />Demo
+          </Link>
           <Link href="#pricing" className="hover:text-white transition-colors">Pricing</Link>
-          <Link href="#" className="hover:text-white transition-colors">Docs</Link>
           <Link href="/marketplace" className="btn-white px-4 py-1.5 text-sm">Get Started</Link>
         </div>
       </nav>
