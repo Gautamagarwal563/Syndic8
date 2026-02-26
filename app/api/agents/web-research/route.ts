@@ -15,8 +15,9 @@ export async function POST(req: NextRequest) {
     // Step 1: Search the web with Firecrawl
     const searchResults = await firecrawl.search(input, { limit: 5 });
 
-    const sources = searchResults.data
-      .map((r: { url: string; title?: string; markdown?: string }) => `URL: ${r.url}\nTitle: ${r.title || "Untitled"}\nContent: ${r.markdown?.slice(0, 800) || ""}`)
+    const webResults = searchResults.web ?? [];
+    const sources = webResults
+      .map((r: { url: string; title?: string; description?: string }) => `URL: ${r.url}\nTitle: ${r.title || "Untitled"}\nSummary: ${r.description || ""}`)
       .join("\n\n---\n\n");
 
     // Step 2: Claude synthesizes the results

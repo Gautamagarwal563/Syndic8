@@ -20,10 +20,13 @@ export async function POST(req: NextRequest) {
       firecrawl.search(`${lead} recent news interviews talks 2024 2025`, { limit: 3 }),
     ]);
 
-    const allResults = [...profileResults.data, ...recentResults.data];
+    const allResults = [
+      ...(profileResults.web ?? []),
+      ...(recentResults.web ?? []),
+    ];
 
     const sources = allResults
-      .map((r: { url: string; title?: string; markdown?: string }) => `URL: ${r.url}\nTitle: ${r.title || "Untitled"}\nContent: ${r.markdown?.slice(0, 600) || ""}`)
+      .map((r: { url: string; title?: string; description?: string }) => `URL: ${r.url}\nTitle: ${r.title || "Untitled"}\nSummary: ${r.description || ""}`)
       .join("\n\n---\n\n");
 
     // Step 2: Claude enriches the lead

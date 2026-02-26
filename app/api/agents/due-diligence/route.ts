@@ -22,13 +22,13 @@ export async function POST(req: NextRequest) {
     ]);
 
     const allResults = [
-      ...generalResults.data,
-      ...fundingResults.data,
-      ...newsResults.data,
+      ...(generalResults.web ?? []),
+      ...(fundingResults.web ?? []),
+      ...(newsResults.web ?? []),
     ];
 
     const sources = allResults
-      .map((r: { url: string; title?: string; markdown?: string }) => `URL: ${r.url}\nTitle: ${r.title || "Untitled"}\nContent: ${r.markdown?.slice(0, 600) || ""}`)
+      .map((r: { url: string; title?: string; description?: string }) => `URL: ${r.url}\nTitle: ${r.title || "Untitled"}\nSummary: ${r.description || ""}`)
       .join("\n\n---\n\n");
 
     // Step 2: Claude produces a due diligence report
