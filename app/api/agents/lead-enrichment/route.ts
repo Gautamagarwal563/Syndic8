@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
 import FirecrawlApp from "@mendable/firecrawl-js";
 
@@ -9,15 +9,14 @@ export async function POST(req: NextRequest) {
   try {
     const { input } = await req.json();
     if (!input?.trim()) {
-      return NextResponse.json({ error: "Input is required" }, { status: 400 });
+      return new Response(JSON.stringify({ error: "Input is required" }), { status: 400 });
     }
 
     const lead = input.trim();
 
-    // Step 1: Search for the person
     const [profileResults, recentResults] = await Promise.all([
       firecrawl.search(`${lead} LinkedIn profile role background`, { limit: 3 }),
-      firecrawl.search(`${lead} recent news interviews talks 2024 2025`, { limit: 3 }),
+      firecrawl.search(`${lead} recent news interviews 2024 2025`, { limit: 3 }),
     ]);
 
     const allResults = [
@@ -26,53 +25,63 @@ export async function POST(req: NextRequest) {
     ];
 
     const sources = allResults
-      .map((r: { url: string; title?: string; description?: string }) => `URL: ${r.url}\nTitle: ${r.title || "Untitled"}\nSummary: ${r.description || ""}`)
+      .map((r: { url: string; title?: string; description?: string }) =>
+        `URL: ${r.url}\nTitle: ${r.title || "Untitled"}\nSummary: ${r.description || ""}`)
       .join("\n\n---\n\n");
 
-    // Step 2: Claude enriches the lead
-    const message = await anthropic.messages.create({
-      model: "claude-opus-4-6",
-      max_tokens: 1200,
-      messages: [
-        {
-          role: "user",
-          content: `You are a lead enrichment agent used by sales and BD teams. Based on the search results, enrich the following lead.
+    const stream = new ReadableStream({
+      async start(controller) {
+        const encoder = new TextEncoder();
+        const messageStream = anthropic.messages.stream({
+          model: "claude-opus-4-6",
+          max_tokens: 1200,
+          messages: [{
+            role: "user",
+            content: `You are a lead enrichment agent for sales and BD teams. Enrich this lead.
 
 Lead: ${lead}
 
 Search Results:
 ${sources}
 
-Produce a structured lead profile:
+Use exactly these sections:
 
 ## Identity
 Full name, current title, current company.
 
 ## Background
-Career history summary in 2-3 sentences.
+Career history in 2-3 sentences.
 
 ## Current Focus
-What they're working on right now based on recent activity.
+What they're working on based on recent signals.
 
 ## Conversation Starters
-3 specific, non-generic angles for outreach based on their actual work and interests.
+3 specific, non-generic outreach angles tied to their actual work.
 
 ## Contact Signals
-Any public email patterns, social handles, or preferred contact methods found.
+Public email patterns, social handles, or preferred channels.
 
 ## Relevance Score
-Rate 1-10 how reachable/warm this lead seems based on available signals, with one sentence of reasoning.
+Rate 1-10 with one sentence of reasoning.
 
-Only include what's supported by the sources. Flag gaps.`,
-        },
-      ],
+Only use facts from the sources. Flag gaps.`,
+          }],
+        });
+
+        for await (const chunk of messageStream) {
+          if (chunk.type === "content_block_delta" && chunk.delta.type === "text_delta") {
+            controller.enqueue(encoder.encode(chunk.delta.text));
+          }
+        }
+        controller.close();
+      },
     });
 
-    const result = message.content[0].type === "text" ? message.content[0].text : "";
-
-    return NextResponse.json({ result });
+    return new Response(stream, {
+      headers: { "Content-Type": "text/plain; charset=utf-8", "X-Content-Type-Options": "nosniff" },
+    });
   } catch (error) {
     console.error("Lead enrichment agent error:", error);
-    return NextResponse.json({ error: "Agent failed. Check your API keys." }, { status: 500 });
+    return new Response(JSON.stringify({ error: "Agent failed. Check your API keys." }), { status: 500 });
   }
 }
