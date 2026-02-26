@@ -16,7 +16,7 @@ export default function Logo({ href = "/" }: Props) {
         lineHeight: 1,
       }}
     >
-      Syndic<span style={{ fontSize: "26px", lineHeight: 1 }}>∞</span>
+      Syndic<span style={{ fontSize: "26px", verticalAlign: "middle", position: "relative", top: "-1px" }}>∞</span>
     </span>
   );
 
