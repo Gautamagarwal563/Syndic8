@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
-import { sendUSDC, AGENT_WALLETS, ORCHESTRATOR_ADDRESS, BASESCAN_URL } from "../../../../lib/blockchain";
+import { sendUSDC, AGENT_WALLETS, ORCHESTRATOR_ADDRESS, BASESCAN_URL } from "../../../lib/blockchain";
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 

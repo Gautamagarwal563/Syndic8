@@ -1,6 +1,5 @@
 import { NextRequest } from "next/server";
-import { sendUSDC, getUSDCBalance, ORCHESTRATOR_ADDRESS } from "../../../../lib/blockchain";
-
+import { sendUSDC, getUSDCBalance, ORCHESTRATOR_ADDRESS } from "../../../lib/blockchain";
 
 export async function POST(req: NextRequest) {
   try {
