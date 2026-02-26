@@ -54,6 +54,9 @@ export default function Home() {
         <Logo />
         <div className="flex items-center gap-4 md:gap-7 text-sm text-zinc-500">
           <Link href="/marketplace" className="hover:text-white transition-colors hidden sm:block">Marketplace</Link>
+          <Link href="/demo" className="hover:text-white transition-colors hidden md:flex items-center gap-1.5">
+            <span className="pulse-dot w-1 h-1 rounded-full bg-emerald-500 inline-block" />Payment Demo
+          </Link>
           <Link href="/orchestrate" className="hover:text-white transition-colors hidden md:flex items-center gap-1.5">
             <span className="pulse-dot w-1 h-1 rounded-full bg-violet-500 inline-block" />Orchestrator
           </Link>
