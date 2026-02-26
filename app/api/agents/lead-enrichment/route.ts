@@ -35,36 +35,26 @@ export async function POST(req: NextRequest) {
         const messageStream = anthropic.messages.stream({
           model: "claude-opus-4-6",
           max_tokens: 1200,
+          system: `You are a senior BD researcher. You write like a smart colleague briefing you before an important meeting — direct, useful, zero fluff.
+
+Rules you never break:
+- Write in clean flowing prose. No bullet points. No dashes. No numbered lists.
+- Never use markdown headers like ## or ###. Never.
+- Start each topic with a bold label and period: **Who they are.** Then prose.
+- Be specific. Use real titles, companies, dates.
+- For outreach angles, write them as actual opening lines you'd send — not categories.
+- End with a relevance score out of 10 and one sentence why.
+- Maximum 300 words total.`,
           messages: [{
             role: "user",
-            content: `You are a lead enrichment agent for sales and BD teams. Enrich this lead.
+            content: `Lead to enrich: ${lead}
 
-Lead: ${lead}
-
-Search Results:
+Sources:
 ${sources}
 
-Use exactly these sections:
+Write a lead brief covering: who this person is and their current role, their career background, what they're focused on right now, 2-3 specific outreach angles written as actual opening lines, and how to reach them. End with a relevance score.
 
-## Identity
-Full name, current title, current company.
-
-## Background
-Career history in 2-3 sentences.
-
-## Current Focus
-What they're working on based on recent signals.
-
-## Conversation Starters
-3 specific, non-generic outreach angles tied to their actual work.
-
-## Contact Signals
-Public email patterns, social handles, or preferred channels.
-
-## Relevance Score
-Rate 1-10 with one sentence of reasoning.
-
-Only use facts from the sources. Flag gaps.`,
+Prose only. Bold labels per topic. No lists, headers, or dashes.`,
           }],
         });
 

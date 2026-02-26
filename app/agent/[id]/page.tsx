@@ -50,52 +50,70 @@ const agentData: Record<string, {
   },
 };
 
-function renderMarkdown(text: string) {
-  const lines = text.split("\n");
-  const elements: React.ReactNode[] = [];
-  let i = 0;
+// Renders clean prose with **Bold label.** style section starts
+function renderReport(text: string) {
+  // Split into paragraphs
+  const paragraphs = text.split(/\n\n+/).filter(p => p.trim());
 
-  while (i < lines.length) {
-    const line = lines[i];
+  return paragraphs.map((para, i) => {
+    const trimmed = para.trim();
 
-    if (line.startsWith("## ")) {
-      elements.push(<h2 key={i} className="text-base font-semibold text-white mt-6 mb-2 pb-2" style={{ borderBottom: "1px solid rgba(255,255,255,0.07)" }}>{line.slice(3)}</h2>);
-    } else if (line.startsWith("### ")) {
-      elements.push(<h3 key={i} className="text-sm font-semibold text-zinc-200 mt-4 mb-1.5">{line.slice(4)}</h3>);
-    } else if (line.startsWith("**") && line.endsWith("**")) {
-      elements.push(<p key={i} className="text-sm font-semibold text-zinc-200 mb-1">{line.slice(2, -2)}</p>);
-    } else if (line.startsWith("- ") || line.startsWith("• ")) {
-      elements.push(
-        <div key={i} className="flex items-start gap-2 mb-1.5">
-          <span className="text-violet-500 mt-0.5 shrink-0 text-xs">●</span>
-          <span className="text-sm text-zinc-400 leading-relaxed">{formatInline(line.slice(2))}</span>
+    // Sources block — last paragraph starting with "Sources:"
+    if (trimmed.startsWith("Sources:") || trimmed.startsWith("**Sources")) {
+      const urls = trimmed
+        .replace(/\*?\*?Sources:?\*?\*?/, "")
+        .split(/\n/)
+        .map(l => l.trim())
+        .filter(l => l.startsWith("http") || l.match(/^[-\d.]\s*http/));
+
+      return (
+        <div key={i} className="mt-8 pt-6" style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}>
+          <p className="text-[10px] font-mono text-zinc-600 uppercase tracking-widest mb-3">Sources</p>
+          <div className="flex flex-col gap-1.5">
+            {urls.map((url, j) => {
+              const clean = url.replace(/^[-\d.]\s*/, "").trim();
+              return (
+                <a key={j} href={clean} target="_blank" rel="noopener noreferrer"
+                  className="text-xs text-zinc-600 hover:text-violet-400 transition-colors truncate">
+                  {clean}
+                </a>
+              );
+            })}
+            {urls.length === 0 && (
+              <p className="text-xs text-zinc-600">{trimmed.replace(/\*?\*?Sources:?\*?\*?/, "").trim()}</p>
+            )}
+          </div>
         </div>
       );
-    } else if (line.match(/^\d+\. /)) {
-      const num = line.match(/^(\d+)\. /)?.[1];
-      elements.push(
-        <div key={i} className="flex items-start gap-2.5 mb-1.5">
-          <span className="text-violet-500 text-xs font-mono mt-0.5 shrink-0 w-4">{num}.</span>
-          <span className="text-sm text-zinc-400 leading-relaxed">{formatInline(line.replace(/^\d+\. /, ""))}</span>
-        </div>
-      );
-    } else if (line.trim() === "") {
-      elements.push(<div key={i} className="h-2" />);
-    } else {
-      elements.push(<p key={i} className="text-sm text-zinc-400 leading-relaxed mb-1">{formatInline(line)}</p>);
     }
-    i++;
-  }
-  return elements;
+
+    // Regular paragraph — parse inline **bold.** at start and inline **bold**
+    return (
+      <p key={i} className="text-[15px] text-zinc-400 leading-[1.8] mb-5">
+        {parseInline(trimmed)}
+      </p>
+    );
+  });
 }
 
-function formatInline(text: string): React.ReactNode {
+function parseInline(text: string): React.ReactNode[] {
+  // Split on **...** spans
   const parts = text.split(/(\*\*[^*]+\*\*)/g);
-  return parts.map((p, i) =>
-    p.startsWith("**") && p.endsWith("**")
-      ? <strong key={i} className="text-zinc-200 font-semibold">{p.slice(2, -2)}</strong>
-      : p
-  );
+  return parts.map((part, i) => {
+    if (part.startsWith("**") && part.endsWith("**")) {
+      const inner = part.slice(2, -2);
+      // Section label — ends with period or colon
+      if (inner.match(/[.:]$/)) {
+        return (
+          <span key={i} className="text-white font-semibold">
+            {inner}{" "}
+          </span>
+        );
+      }
+      return <strong key={i} className="text-zinc-200 font-semibold">{inner}</strong>;
+    }
+    return <span key={i}>{part}</span>;
+  });
 }
 
 export default function AgentPage() {
@@ -274,36 +292,37 @@ export default function AgentPage() {
         {/* Streaming result */}
         {result !== null && (
           <div ref={resultRef} className="rounded-[20px] overflow-hidden"
-            style={{ border: "1px solid rgba(255,255,255,0.08)" }}>
+            style={{ border: "1px solid rgba(255,255,255,0.1)", boxShadow: "0 24px 64px rgba(0,0,0,0.5)" }}>
             {/* Header */}
-            <div className="flex items-center justify-between px-5 py-3"
-              style={{ background: "rgba(255,255,255,0.03)", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+            <div className="flex items-center justify-between px-6 py-4"
+              style={{ background: "rgba(255,255,255,0.04)", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
               <div className="flex items-center gap-2 text-xs">
                 {isStreaming ? (
                   <>
                     <span className="pulse-dot w-1.5 h-1.5 rounded-full bg-violet-400 inline-block" />
-                    <span className="text-violet-400">Streaming…</span>
+                    <span className="text-zinc-400">Writing report…</span>
                   </>
                 ) : (
-                  <>
-                    <span className="text-green-400">✓</span>
-                    <span className="text-green-400">Complete</span>
-                  </>
+                  <div className="flex items-center gap-2">
+                    <span className="w-1.5 h-1.5 rounded-full bg-green-400 inline-block" />
+                    <span className="text-zinc-400 font-medium">Report ready</span>
+                  </div>
                 )}
               </div>
-              <div className="flex items-center gap-3">
-                {!isStreaming && (
-                  <button onClick={handleCopy} className="text-xs text-zinc-600 hover:text-white transition-colors">
-                    {copied ? "Copied ✓" : "Copy"}
+              {!isStreaming && (
+                <div className="flex items-center gap-4">
+                  <button onClick={handleCopy}
+                    className="text-xs text-zinc-600 hover:text-white transition-colors flex items-center gap-1.5">
+                    {copied ? "✓ Copied" : "Copy report"}
                   </button>
-                )}
-              </div>
+                </div>
+              )}
             </div>
 
             {/* Body */}
-            <div className="p-6" style={{ background: "rgba(0,0,0,0.35)" }}>
-              <div className="text-sm leading-relaxed">
-                {renderMarkdown(result)}
+            <div className="p-7" style={{ background: "rgba(0,0,0,0.3)" }}>
+              <div>
+                {renderReport(result)}
                 {isStreaming && <span className="cursor" />}
               </div>
             </div>

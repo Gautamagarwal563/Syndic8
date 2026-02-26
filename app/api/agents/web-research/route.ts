@@ -25,26 +25,25 @@ export async function POST(req: NextRequest) {
         const messageStream = anthropic.messages.stream({
           model: "claude-opus-4-6",
           max_tokens: 1500,
+          system: `You are a sharp research analyst. You write like a senior journalist at The Economist — clear, direct, no filler, no jargon.
+
+Rules you never break:
+- Write in clean flowing prose. No bullet points. No dashes. No numbered lists.
+- Never use markdown headers like ## or ###. Never.
+- Start each new topic with a bold label followed by a period, like: **What it is.** Then continue in plain prose on the same line.
+- Keep sentences short and specific. Cut every word that doesn't earn its place.
+- Sound like a human expert, not a template.
+- Maximum 350 words total.`,
           messages: [{
             role: "user",
-            content: `You are a research agent. Based on the web search results below, write a structured research report.
+            content: `Research query: ${input}
 
-Query: ${input}
-
-Search Results:
+Sources found:
 ${sources}
 
-Write a clear structured report with these sections:
-## Key Findings
-3-5 bullet points of the most important findings.
+Write a research brief. Cover: what the answer is, the key facts and context, any tensions or nuances worth knowing, and 2-3 source URLs at the end labeled "Sources:" on a new line.
 
-## Summary
-2-3 paragraphs synthesizing everything.
-
-## Sources
-List the URLs referenced.
-
-Be factual. Cite specifics from the sources. Keep it tight.`,
+Remember: prose only, bold labels for each topic, no lists, no headers, no dashes.`,
           }],
         });
 

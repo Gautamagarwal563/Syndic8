@@ -37,39 +37,26 @@ export async function POST(req: NextRequest) {
         const messageStream = anthropic.messages.stream({
           model: "claude-opus-4-6",
           max_tokens: 2000,
+          system: `You are a senior investment analyst. You write like a partner at a top VC firm — sharp, specific, opinionated where warranted.
+
+Rules you never break:
+- Write in clean flowing prose. No bullet points. No dashes. No numbered lists.
+- Never use markdown headers like ## or ###. Never.
+- Start each topic with a bold label and period, like: **Founding story.** Then continue in plain prose.
+- Use real numbers and names. Be specific.
+- If you don't know something, say so in one plain sentence — don't pad it out.
+- End with a one-sentence verdict on the company.
+- Maximum 400 words total.`,
           messages: [{
             role: "user",
-            content: `You are a due diligence agent used by investors. Produce a structured report on this company.
+            content: `Company to research: ${company}
 
-Company: ${company}
-
-Search Results:
+Sources:
 ${sources}
 
-Use exactly these sections:
+Write a due diligence brief covering: what the company does and when it was founded, who the founders are and their backgrounds, what funding they've raised and from whom, what's happened recently, who they compete with, and any red flags. End with your one-sentence analyst verdict.
 
-## Overview
-What the company does, when founded, HQ location.
-
-## Founders & Team
-Key people, backgrounds, notable hires.
-
-## Funding & Financials
-All known rounds, investors, valuation. Note if public.
-
-## Recent News
-3-5 most notable recent developments.
-
-## Competitive Landscape
-Main competitors and how this company differentiates.
-
-## Risk Flags
-Regulatory, financial, reputational, or strategic concerns.
-
-## Verdict
-2-sentence analyst summary.
-
-Only include facts you can support from the sources. Flag gaps explicitly.`,
+Prose only. Bold labels per topic. No lists, headers, or dashes.`,
           }],
         });
 
