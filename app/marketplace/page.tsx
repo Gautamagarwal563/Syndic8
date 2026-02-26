@@ -59,9 +59,20 @@ const agents = [
     examples: ["AI agent marketplace", "B2B Slack analytics", "No-code Shopify builder"],
     badge: "New",
   },
+  {
+    id: "roast-startup",
+    name: "Roast My Startup",
+    description: "Your idea in. A brutally funny, sharply honest teardown out — who's already doing it, what's broken, and whether there's anything worth saving.",
+    tags: ["Strategy"],
+    price: "$0.50", priceUnit: "per roast", icon: "🔥", speed: "~10s",
+    examples: ["AI therapist for founders", "Notion for lawyers", "Uber for dog walking"],
+    badge: "Hot",
+  },
 ];
 
 const FILTERS = ["All", "Research", "Finance", "Sales", "Strategy", "Fundraising"];
+
+// Update agent count in header dynamically
 
 const trending = [
   "Perplexity AI due diligence",
@@ -93,15 +104,15 @@ export default function Marketplace() {
       </div>
 
       {/* Nav */}
-      <nav className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-8 py-4"
+      <nav className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 md:px-8 py-4"
         style={{ background: "rgba(6,6,8,0.85)", backdropFilter: "blur(24px)", WebkitBackdropFilter: "blur(24px)", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
         <Logo />
-        <div className="flex items-center gap-7 text-sm text-zinc-500">
-          <span className="text-white font-medium text-sm">Marketplace</span>
-          <Link href="/demo" className="hover:text-white transition-colors flex items-center gap-1.5">
+        <div className="flex items-center gap-4 md:gap-7 text-sm text-zinc-500">
+          <span className="text-white font-medium text-sm hidden sm:block">Marketplace</span>
+          <Link href="/demo" className="hover:text-white transition-colors hidden md:flex items-center gap-1.5">
             <span className="pulse-dot w-1 h-1 rounded-full bg-violet-500 inline-block" />Demo
           </Link>
-          <Link href="/#pricing" className="hover:text-white transition-colors">Pricing</Link>
+          <Link href="/#pricing" className="hover:text-white transition-colors hidden md:block">Pricing</Link>
           <button className="btn-ghost px-4 py-1.5 text-sm">List Your Agent</button>
         </div>
       </nav>
@@ -111,7 +122,7 @@ export default function Marketplace() {
         {/* Header */}
         <div className="mb-10">
           <p className="text-[10px] font-mono text-zinc-600 uppercase tracking-widest mb-3">Marketplace</p>
-          <h1 className="text-5xl font-bold tracking-[-0.04em] mb-3">
+          <h1 className="text-4xl md:text-5xl font-bold tracking-[-0.04em] mb-3">
             {agents.length} agents,<br />ready to run.
           </h1>
           <p className="text-zinc-500 text-[15px]">Pay per task. Results in seconds. No account needed.</p>

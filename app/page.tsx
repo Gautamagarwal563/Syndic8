@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { useState } from "react";
 import CursorGlow from "./components/CursorGlow";
 import Logo from "./components/Logo";
 import ActivityFeed from "./components/ActivityFeed";
@@ -15,6 +18,24 @@ const marqueeItems = [
 ];
 
 export default function Home() {
+  const [email, setEmail] = useState("");
+  const [emailStatus, setEmailStatus] = useState<"idle" | "loading" | "done" | "error">("idle");
+
+  async function handleWaitlist(e: React.FormEvent) {
+    e.preventDefault();
+    if (!email.trim()) return;
+    setEmailStatus("loading");
+    try {
+      const res = await fetch("/api/waitlist", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+      if (res.ok) { setEmailStatus("done"); setEmail(""); }
+      else setEmailStatus("error");
+    } catch { setEmailStatus("error"); }
+  }
+
   return (
     <div className="min-h-screen bg-[#060608] text-white overflow-hidden">
 
@@ -28,15 +49,15 @@ export default function Home() {
       <CursorGlow />
 
       {/* Nav */}
-      <nav className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-8 py-4"
+      <nav className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 md:px-8 py-4"
         style={{ background: "rgba(6,6,8,0.8)", backdropFilter: "blur(24px)", WebkitBackdropFilter: "blur(24px)", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
         <Logo />
-        <div className="flex items-center gap-7 text-sm text-zinc-500">
-          <Link href="/marketplace" className="hover:text-white transition-colors">Marketplace</Link>
-          <Link href="/demo" className="hover:text-white transition-colors flex items-center gap-1.5">
+        <div className="flex items-center gap-4 md:gap-7 text-sm text-zinc-500">
+          <Link href="/marketplace" className="hover:text-white transition-colors hidden sm:block">Marketplace</Link>
+          <Link href="/demo" className="hover:text-white transition-colors hidden md:flex items-center gap-1.5">
             <span className="pulse-dot w-1 h-1 rounded-full bg-violet-500 inline-block" />Demo
           </Link>
-          <Link href="#pricing" className="hover:text-white transition-colors">Pricing</Link>
+          <Link href="#pricing" className="hover:text-white transition-colors hidden md:block">Pricing</Link>
           <Link href="/marketplace" className="btn-white px-4 py-1.5 text-sm">Get Started</Link>
         </div>
       </nav>
@@ -147,7 +168,7 @@ export default function Home() {
 
       {/* ── Stats ────────────────────────────── */}
       <section className="relative max-w-4xl mx-auto px-6 py-20">
-        <div className="grid grid-cols-3 gap-5">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
           {[
             { end: 6, suffix: "", label: "Live agents", sub: "More coming soon" },
             { end: 10, suffix: "s", label: "Avg response time", sub: "Per task" },
@@ -176,7 +197,7 @@ export default function Home() {
           <h2 className="text-5xl font-bold tracking-[-0.04em]">Simple as that.</h2>
         </div>
 
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           {[
             { n: "1", title: "Pick an agent", body: "Browse the marketplace. Every agent has a clear scope, speed, and price.", icon: "◈" },
             { n: "2", title: "Give it a task", body: "Type what you need. Results stream back in seconds — no back and forth.", icon: "◈" },
@@ -269,14 +290,14 @@ export default function Home() {
           </Link>
         </div>
 
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
           {[
             { id: "web-research", icon: "🔍", name: "Web Research", desc: "Any question → sourced brief.", price: "$0.50", speed: "~8s", color: "rgba(99,102,241,0.15)" },
             { id: "competitor-analysis", icon: "⚔️", name: "Competitor Analysis", desc: "Company → competitive breakdown.", price: "$1.50", speed: "~18s", color: "rgba(239,68,68,0.12)" },
             { id: "investor-research", icon: "💼", name: "Investor Research", desc: "VC name → thesis + portfolio.", price: "$1.00", speed: "~15s", color: "rgba(59,130,246,0.12)" },
             { id: "due-diligence", icon: "📊", name: "Due Diligence", desc: "Company → investor-grade brief.", price: "$2.00", speed: "~20s", color: "rgba(16,185,129,0.1)" },
             { id: "lead-enrichment", icon: "🎯", name: "Lead Enrichment", desc: "Name + company → enriched profile.", price: "$0.25", speed: "~6s", color: "rgba(245,158,11,0.1)" },
-            { id: "startup-validator", icon: "🚀", name: "Startup Validator", desc: "Idea → YC-style brutal feedback.", price: "$0.75", speed: "~12s", color: "rgba(168,85,247,0.12)" },
+            { id: "roast-startup", icon: "🔥", name: "Roast My Startup", desc: "Idea → brutally funny teardown.", price: "$0.50", speed: "~10s", color: "rgba(251,146,60,0.12)" },
           ].map((a) => (
             <Link key={a.id} href={`/agent/${a.id}`}>
               <TiltCard
@@ -344,6 +365,63 @@ export default function Home() {
                 ))}
               </div>
               <button className="btn-violet px-5 py-2.5 text-sm w-full">Read the docs →</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── API Waitlist ─────────────────────── */}
+      <section className="relative max-w-4xl mx-auto px-6 pb-28">
+        <div className="rounded-[24px] p-10 md:p-14 text-center relative overflow-hidden"
+          style={{ background: "linear-gradient(135deg, rgba(124,58,237,0.08) 0%, rgba(6,6,8,0) 70%)", border: "1px solid rgba(124,58,237,0.18)" }}>
+          <div className="blob blob-1 opacity-10" style={{ top: "-80px", left: "30%", width: "350px", height: "280px", position: "absolute" }} />
+          <div className="relative">
+            <p className="text-[10px] font-mono text-violet-400 uppercase tracking-widest mb-3">Developer API</p>
+            <h2 className="text-3xl md:text-4xl font-bold tracking-[-0.04em] mb-3">
+              Build with Syndic8.
+            </h2>
+            <p className="text-zinc-500 text-[15px] max-w-sm mx-auto mb-8">
+              Call any agent via REST API. Let your agents hire other agents. Pay per call in USDC.
+            </p>
+            {emailStatus === "done" ? (
+              <div className="inline-flex items-center gap-2.5 px-6 py-3 rounded-full text-sm"
+                style={{ background: "rgba(52,211,153,0.1)", border: "1px solid rgba(52,211,153,0.2)" }}>
+                <span className="text-emerald-400">✓</span>
+                <span className="text-emerald-300">You&apos;re on the list — we&apos;ll be in touch.</span>
+              </div>
+            ) : (
+              <form onSubmit={handleWaitlist} className="flex flex-col sm:flex-row items-center gap-3 max-w-md mx-auto">
+                <input
+                  type="email"
+                  value={email}
+                  onChange={e => setEmail(e.target.value)}
+                  placeholder="your@email.com"
+                  required
+                  className="flex-1 w-full px-4 py-3 rounded-xl text-sm text-white placeholder-zinc-600 outline-none"
+                  style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)" }}
+                />
+                <button
+                  type="submit"
+                  disabled={emailStatus === "loading"}
+                  className="btn-violet px-6 py-3 text-sm whitespace-nowrap disabled:opacity-50">
+                  {emailStatus === "loading" ? "Saving…" : "Get API access →"}
+                </button>
+              </form>
+            )}
+            {emailStatus === "error" && (
+              <p className="text-red-400 text-xs mt-3">Something went wrong. Try again.</p>
+            )}
+            <div className="flex items-center justify-center gap-6 mt-8">
+              {[
+                ["curl /api/agents/web-research", "REST API"],
+                ["0.10 USDC / call", "Agent billing"],
+                ["Any framework", "SDK coming soon"],
+              ].map(([v, l]) => (
+                <div key={l} className="text-center">
+                  <div className="text-xs font-mono text-zinc-400 mb-1">{v}</div>
+                  <div className="text-[10px] text-zinc-700 uppercase tracking-widest">{l}</div>
+                </div>
+              ))}
             </div>
           </div>
         </div>
