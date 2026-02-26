@@ -25,6 +25,8 @@ type TxEvent = {
   icon: string;
   cost: string;
   txHash: string;
+  basescanUrl: string;
+  realPayment: boolean;
   status: "pending" | "confirmed";
   timestamp: string;
 };
@@ -130,13 +132,15 @@ export default function DemoPage() {
         setAgentIcons(prev => ({ ...prev, [event.agentId]: event.icon }));
         flashPayment(event.agentId);
         const tx: TxEvent = {
-          from: WALLETS.orchestrator.address,
-          to: WALLETS[event.agentId]?.address ?? "0xUnknown",
+          from: (event as { fromAddress?: string }).fromAddress ?? WALLETS.orchestrator.address,
+          to: (event as { toAddress?: string }).toAddress ?? WALLETS[event.agentId]?.address ?? "0xUnknown",
           agentId: event.agentId,
           agentName: event.agentName,
           icon: event.icon,
           cost: event.cost,
           txHash: event.txHash,
+          basescanUrl: (event as { basescanUrl?: string }).basescanUrl ?? `https://sepolia.basescan.org/tx/${event.txHash}`,
+          realPayment: (event as { realPayment?: boolean }).realPayment ?? false,
           status: "pending",
           timestamp: new Date().toLocaleTimeString(),
         };
@@ -359,8 +363,17 @@ export default function DemoPage() {
                           </div>
                           <div className="flex items-center justify-between mt-0.5">
                             <span className="text-zinc-700">network</span>
-                            <span className="text-zinc-500">Base</span>
+                            <span className="text-zinc-500">Base Sepolia</span>
                           </div>
+                          {confirmed && (
+                            <div className="mt-1.5 pt-1.5" style={{ borderTop: "1px solid rgba(255,255,255,0.05)" }}>
+                              <a href={`https://sepolia.basescan.org/tx/${txHash}`}
+                                target="_blank" rel="noopener noreferrer"
+                                className="text-violet-400 hover:text-violet-300 transition-colors">
+                                View on Basescan ↗
+                              </a>
+                            </div>
+                          )}
                         </div>
 
                         {/* Output preview */}
@@ -403,27 +416,39 @@ export default function DemoPage() {
                 </div>
                 <div className="divide-y" style={{ borderColor: "rgba(255,255,255,0.04)" }}>
                   {transactions.map((tx, i) => (
-                    <div key={i} className="px-5 py-3 grid grid-cols-[auto_1fr_auto_auto] gap-4 items-center text-xs font-mono">
-                      <span className="text-zinc-600">{tx.timestamp}</span>
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-2 mb-0.5">
-                          <span className="text-zinc-500">{shortAddr(tx.from)}</span>
+                    <div key={i} className="px-5 py-3 text-xs font-mono">
+                      <div className="flex items-center justify-between gap-4 mb-1">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <span className="text-zinc-600 shrink-0">{tx.timestamp}</span>
+                          <span className="text-zinc-500 truncate">{shortAddr(tx.from)}</span>
                           <span className="text-zinc-700">→</span>
-                          <span className="text-zinc-400">{shortAddr(tx.to)}</span>
+                          <span className="text-zinc-400 truncate">{shortAddr(tx.to)}</span>
                         </div>
-                        <span className="text-zinc-700">{shortTx(tx.txHash)}</span>
+                        <div className="flex items-center gap-2 shrink-0">
+                          <span className="text-emerald-400 font-bold">{tx.cost} USDC</span>
+                          {tx.realPayment && (
+                            <span className="text-[10px] px-2 py-0.5 rounded-full text-emerald-300"
+                              style={{ background: "rgba(52,211,153,0.1)", border: "1px solid rgba(52,211,153,0.25)" }}>
+                              on-chain ✓
+                            </span>
+                          )}
+                          <span className={`text-[10px] px-2 py-0.5 rounded-full ${
+                            tx.status === "confirmed" ? "text-emerald-400" : "text-yellow-400"
+                          }`} style={{
+                            background: tx.status === "confirmed" ? "rgba(52,211,153,0.08)" : "rgba(251,191,36,0.08)",
+                            border: tx.status === "confirmed" ? "1px solid rgba(52,211,153,0.2)" : "1px solid rgba(251,191,36,0.2)",
+                          }}>
+                            {tx.status === "confirmed" ? "confirmed" : "pending"}
+                          </span>
+                        </div>
                       </div>
-                      <span className="text-emerald-400 font-bold">{tx.cost} USDC</span>
-                      <span className={`text-[10px] px-2 py-0.5 rounded-full ${
-                        tx.status === "confirmed"
-                          ? "text-emerald-400"
-                          : "text-yellow-400"
-                      }`} style={{
-                        background: tx.status === "confirmed" ? "rgba(52,211,153,0.08)" : "rgba(251,191,36,0.08)",
-                        border: tx.status === "confirmed" ? "1px solid rgba(52,211,153,0.2)" : "1px solid rgba(251,191,36,0.2)",
-                      }}>
-                        {tx.status === "confirmed" ? "confirmed" : "pending"}
-                      </span>
+                      <div className="flex items-center gap-3">
+                        <span className="text-zinc-700">{shortTx(tx.txHash)}</span>
+                        <a href={tx.basescanUrl} target="_blank" rel="noopener noreferrer"
+                          className="text-violet-500 hover:text-violet-300 transition-colors text-[10px]">
+                          View on Basescan ↗
+                        </a>
+                      </div>
                     </div>
                   ))}
                 </div>

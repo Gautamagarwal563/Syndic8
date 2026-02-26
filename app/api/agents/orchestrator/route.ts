@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
+import { sendUSDC, AGENT_WALLETS, ORCHESTRATOR_ADDRESS, BASESCAN_URL } from "../../../lib/blockchain";
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
@@ -12,12 +13,14 @@ const AGENT_REGISTRY = {
   "startup-validator":  { name: "Startup Validator Agent",  cost: 0.75, icon: "🚀", description: "YC-style idea feedback" },
 };
 
+const REAL_PAYMENTS_ENABLED = !!process.env.ORCHESTRATOR_PRIVATE_KEY;
+
 function send(controller: ReadableStreamDefaultController, encoder: TextEncoder, event: object) {
   controller.enqueue(encoder.encode(JSON.stringify(event) + "\n"));
 }
 
 function fakeTxHash(): string {
-  return "0x" + Array.from({ length: 16 }, () => Math.floor(Math.random() * 16).toString(16)).join("");
+  return "0x" + Array.from({ length: 64 }, () => Math.floor(Math.random() * 16).toString(16)).join("");
 }
 
 export async function POST(req: NextRequest) {
@@ -82,7 +85,23 @@ Return ONLY a JSON array. Example: ["web-research", "due-diligence"]`,
 
         for (const agentId of agentIds) {
           const info = AGENT_REGISTRY[agentId as keyof typeof AGENT_REGISTRY];
-          const txHash = fakeTxHash();
+
+          // Attempt real USDC payment on Base Sepolia
+          let txHash = fakeTxHash();
+          let basescanUrl = `${BASESCAN_URL}/tx/${txHash}`;
+          let realPayment = false;
+          const agentWallet = AGENT_WALLETS[agentId] ?? "0x0000000000000000000000000000000000000000";
+
+          if (REAL_PAYMENTS_ENABLED) {
+            try {
+              const payment = await sendUSDC(agentId, info.cost);
+              txHash = payment.txHash;
+              basescanUrl = payment.basescanUrl;
+              realPayment = true;
+            } catch (err) {
+              console.error("Real payment failed, falling back to simulated:", err);
+            }
+          }
 
           send(controller, encoder, {
             type: "hiring",
@@ -91,9 +110,13 @@ Return ONLY a JSON array. Example: ["web-research", "due-diligence"]`,
             icon: info.icon,
             cost: info.cost.toFixed(2),
             txHash,
+            basescanUrl,
+            realPayment,
+            fromAddress: ORCHESTRATOR_ADDRESS,
+            toAddress: agentWallet,
             walletBefore: walletBalance.toFixed(2),
             walletAfter: (walletBalance - info.cost).toFixed(2),
-            network: "Base",
+            network: "Base Sepolia",
           });
 
           walletBalance -= info.cost;
