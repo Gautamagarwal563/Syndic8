@@ -11,6 +11,7 @@ const agentData: Record<string, {
   price: string;
   placeholder: string;
   inputLabel: string;
+  speed: string;
 }> = {
   "web-research": {
     name: "Web Research Agent",
@@ -19,6 +20,7 @@ const agentData: Record<string, {
     price: "$0.50",
     placeholder: "e.g. What is the current state of the AI agent market in 2025?",
     inputLabel: "What do you want researched?",
+    speed: "~8 seconds",
   },
   "due-diligence": {
     name: "Due Diligence Agent",
@@ -27,14 +29,16 @@ const agentData: Record<string, {
     price: "$2.00",
     placeholder: "e.g. Perplexity AI",
     inputLabel: "Company name",
+    speed: "~20 seconds",
   },
   "lead-enrichment": {
     name: "Lead Enrichment Agent",
-    description: "Drop in a name and company. Get back context, role, and outreach angles.",
+    description: "Drop in a name and company. Get context, role, and specific outreach angles.",
     icon: "🎯",
     price: "$0.25",
     placeholder: "e.g. Sam Altman, OpenAI",
     inputLabel: "Name and company",
+    speed: "~6 seconds",
   },
 };
 
@@ -47,20 +51,21 @@ export default function AgentPage() {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
 
   if (!agent) {
     return (
-      <div className="min-h-screen bg-[#0a0a0a] text-white flex items-center justify-center">
+      <div className="min-h-screen bg-[#080808] text-white flex items-center justify-center">
         <div className="text-center">
-          <p className="text-zinc-400 mb-4">Agent not found.</p>
-          <Link href="/marketplace" className="text-violet-400 hover:underline">Back to marketplace</Link>
+          <p className="text-zinc-500 mb-4">Agent not found.</p>
+          <Link href="/marketplace" className="text-violet-400 hover:underline text-sm">← Back to marketplace</Link>
         </div>
       </div>
     );
   }
 
   async function runAgent() {
-    if (!input.trim()) return;
+    if (!input.trim() || loading) return;
     setLoading(true);
     setResult(null);
     setError(null);
@@ -81,82 +86,158 @@ export default function AgentPage() {
     }
   }
 
+  function handleCopy() {
+    if (!result) return;
+    navigator.clipboard.writeText(result);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }
+
   return (
-    <div className="min-h-screen bg-[#0a0a0a] text-white">
+    <div className="min-h-screen bg-[#080808] text-white overflow-hidden">
+
+      {/* Background */}
+      <div className="fixed inset-0 bg-grid pointer-events-none" />
+      <div
+        className="fixed top-0 left-1/2 -translate-x-1/2 pointer-events-none"
+        style={{
+          width: "600px",
+          height: "300px",
+          background: "radial-gradient(ellipse at 50% 0%, rgba(124,58,237,0.1) 0%, transparent 70%)",
+        }}
+      />
+
       {/* Nav */}
-      <nav className="flex items-center justify-between px-8 py-5 border-b border-white/[0.06]">
-        <Link href="/" className="text-lg font-semibold tracking-tight">Syndic8</Link>
-        <Link href="/marketplace" className="text-sm text-zinc-400 hover:text-white transition-colors">
-          ← Back to marketplace
+      <nav
+        className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-8 py-4"
+        style={{
+          background: "rgba(8,8,8,0.75)",
+          backdropFilter: "blur(20px)",
+          WebkitBackdropFilter: "blur(20px)",
+          borderBottom: "1px solid rgba(255,255,255,0.05)",
+        }}
+      >
+        <Link href="/" className="text-[15px] font-semibold tracking-tight">Syndic8</Link>
+        <Link href="/marketplace" className="text-sm text-zinc-500 hover:text-white transition-colors">
+          ← Marketplace
         </Link>
       </nav>
 
-      <div className="max-w-3xl mx-auto px-6 py-16">
+      <div className="relative max-w-2xl mx-auto px-6 pt-32 pb-20">
+
         {/* Agent header */}
         <div className="mb-10">
-          <div className="text-4xl mb-4">{agent.icon}</div>
+          <div
+            className="w-14 h-14 rounded-2xl flex items-center justify-center text-3xl mb-5"
+            style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}
+          >
+            {agent.icon}
+          </div>
           <h1 className="text-3xl font-bold tracking-tight mb-2">{agent.name}</h1>
-          <p className="text-zinc-400 mb-4">{agent.description}</p>
-          <span className="text-sm text-zinc-500">{agent.price} per task</span>
+          <p className="text-zinc-500 text-[15px] mb-3">{agent.description}</p>
+          <div className="flex items-center gap-3 text-xs text-zinc-600">
+            <span>{agent.price} per task</span>
+            <span>·</span>
+            <span>{agent.speed}</span>
+            <span>·</span>
+            <span className="text-green-500">live</span>
+          </div>
         </div>
 
-        {/* Input */}
-        <div className="bg-white/[0.03] border border-white/[0.08] rounded-2xl p-6 mb-6">
-          <label className="block text-sm text-zinc-400 mb-3">{agent.inputLabel}</label>
+        {/* Input card */}
+        <div
+          className="rounded-2xl p-5 mb-4"
+          style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)" }}
+        >
+          <label className="block text-xs text-zinc-500 font-medium mb-3 uppercase tracking-wider">
+            {agent.inputLabel}
+          </label>
           <textarea
             value={input}
             onChange={(e) => setInput(e.target.value)}
+            onKeyDown={(e) => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) runAgent(); }}
             placeholder={agent.placeholder}
             rows={3}
-            className="w-full bg-white/[0.04] border border-white/[0.1] rounded-xl px-4 py-3 text-sm text-white placeholder-zinc-600 resize-none outline-none focus:border-violet-500/50 transition-colors"
+            className="w-full text-sm text-white placeholder-zinc-700 resize-none outline-none bg-transparent leading-relaxed"
           />
-          <div className="flex items-center justify-between mt-4">
-            <span className="text-xs text-zinc-600">Results stream back in ~10 seconds</span>
+          <div
+            className="flex items-center justify-between mt-4 pt-4"
+            style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}
+          >
+            <span className="text-xs text-zinc-700">⌘ + Enter to run</span>
             <button
               onClick={runAgent}
               disabled={loading || !input.trim()}
-              className="bg-white text-black px-6 py-2.5 rounded-full text-sm font-medium hover:bg-zinc-200 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              className="btn-primary px-5 py-2 text-sm font-medium text-black disabled:opacity-30 disabled:cursor-not-allowed"
             >
-              {loading ? "Running..." : `Run Agent · ${agent.price}`}
+              {loading ? "Running..." : `Run · ${agent.price}`}
             </button>
           </div>
         </div>
 
-        {/* Result */}
+        {/* Loading state */}
         {loading && (
-          <div className="bg-white/[0.03] border border-white/[0.08] rounded-2xl p-6">
-            <div className="flex items-center gap-3 text-zinc-400 text-sm">
-              <span className="w-2 h-2 rounded-full bg-violet-400 animate-pulse"></span>
-              Agent is working...
+          <div
+            className="rounded-2xl p-6"
+            style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)" }}
+          >
+            <div className="flex items-center gap-3">
+              <div className="flex gap-1">
+                {[0, 1, 2].map((i) => (
+                  <span
+                    key={i}
+                    className="w-1.5 h-1.5 rounded-full bg-violet-500"
+                    style={{ animation: `pulse-dot 1.2s ease-in-out ${i * 0.2}s infinite` }}
+                  />
+                ))}
+              </div>
+              <span className="text-sm text-zinc-500">Agent is working…</span>
             </div>
           </div>
         )}
 
+        {/* Result */}
         {result && (
-          <div className="bg-white/[0.03] border border-white/[0.08] rounded-2xl p-6">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2 text-sm text-green-400">
+          <div
+            className="rounded-2xl overflow-hidden"
+            style={{ border: "1px solid rgba(255,255,255,0.08)" }}
+          >
+            {/* Result header */}
+            <div
+              className="flex items-center justify-between px-5 py-3"
+              style={{ background: "rgba(255,255,255,0.03)", borderBottom: "1px solid rgba(255,255,255,0.06)" }}
+            >
+              <div className="flex items-center gap-2 text-xs text-green-400">
                 <span>✓</span>
                 <span>Complete</span>
               </div>
               <button
-                onClick={() => navigator.clipboard.writeText(result)}
-                className="text-xs text-zinc-500 hover:text-white transition-colors"
+                onClick={handleCopy}
+                className="text-xs text-zinc-600 hover:text-white transition-colors"
               >
-                Copy
+                {copied ? "Copied!" : "Copy"}
               </button>
             </div>
-            <pre className="text-sm text-zinc-300 whitespace-pre-wrap leading-relaxed font-sans">
-              {result}
-            </pre>
+
+            {/* Result body */}
+            <div className="p-5" style={{ background: "rgba(0,0,0,0.3)" }}>
+              <pre className="text-sm text-zinc-300 whitespace-pre-wrap leading-relaxed font-sans">
+                {result}
+              </pre>
+            </div>
           </div>
         )}
 
+        {/* Error */}
         {error && (
-          <div className="bg-red-500/10 border border-red-500/20 rounded-2xl p-6">
+          <div
+            className="rounded-2xl p-5"
+            style={{ background: "rgba(239,68,68,0.06)", border: "1px solid rgba(239,68,68,0.15)" }}
+          >
             <p className="text-red-400 text-sm">{error}</p>
           </div>
         )}
+
       </div>
     </div>
   );
