@@ -1,5 +1,6 @@
 import Link from "next/link";
 import CursorGlow from "./components/CursorGlow";
+import Logo from "./components/Logo";
 import ActivityFeed from "./components/ActivityFeed";
 import CountUp from "./components/CountUp";
 import TiltCard from "./components/TiltCard";
@@ -29,7 +30,7 @@ export default function Home() {
       {/* Nav */}
       <nav className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-8 py-4"
         style={{ background: "rgba(6,6,8,0.8)", backdropFilter: "blur(24px)", WebkitBackdropFilter: "blur(24px)", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
-        <span className="text-[15px] font-semibold tracking-tight">Syndic8</span>
+        <Logo />
         <div className="flex items-center gap-7 text-sm text-zinc-500">
           <Link href="/marketplace" className="hover:text-white transition-colors">Marketplace</Link>
           <Link href="/demo" className="hover:text-white transition-colors flex items-center gap-1.5">

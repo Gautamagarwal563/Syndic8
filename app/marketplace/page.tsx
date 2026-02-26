@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Logo from "../components/Logo";
 
 const agents = [
   {
@@ -49,7 +50,7 @@ export default function Marketplace() {
       {/* Nav */}
       <nav className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-8 py-4"
         style={{ background: "rgba(6,6,8,0.8)", backdropFilter: "blur(24px)", WebkitBackdropFilter: "blur(24px)", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
-        <Link href="/" className="text-[15px] font-semibold tracking-tight">Syndic8</Link>
+        <Logo />
         <div className="flex items-center gap-7 text-sm text-zinc-500">
           <span className="text-white text-sm font-medium">Marketplace</span>
           <Link href="/#pricing" className="hover:text-white transition-colors">Pricing</Link>
