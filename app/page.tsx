@@ -54,13 +54,13 @@ export default function Home() {
         <Logo />
         <div className="flex items-center gap-4 md:gap-7 text-sm text-zinc-500">
           <Link href="/marketplace" className="hover:text-white transition-colors hidden sm:block">Marketplace</Link>
+          <Link href="/batch" className="hover:text-white transition-colors hidden md:block">Batch</Link>
           <Link href="/demo" className="hover:text-white transition-colors hidden md:flex items-center gap-1.5">
-            <span className="pulse-dot w-1 h-1 rounded-full bg-emerald-500 inline-block" />Payment Demo
+            <span className="pulse-dot w-1 h-1 rounded-full bg-emerald-500 inline-block" />Demo
           </Link>
           <Link href="/orchestrate" className="hover:text-white transition-colors hidden md:flex items-center gap-1.5">
             <span className="pulse-dot w-1 h-1 rounded-full bg-violet-500 inline-block" />Orchestrator
           </Link>
-          <Link href="#pricing" className="hover:text-white transition-colors hidden md:block">Pricing</Link>
           <Link href="/orchestrate" className="btn-white px-4 py-1.5 text-sm">Try Live Demo</Link>
         </div>
       </nav>
@@ -371,6 +371,26 @@ export default function Home() {
             </div>
           </div>
         </div>
+      </section>
+
+      {/* ── Batch Mode CTA ───────────────────── */}
+      <section className="relative max-w-4xl mx-auto px-6 pb-20">
+        <Link href="/batch">
+          <div className="rounded-[24px] p-8 md:p-10 flex flex-col md:flex-row items-center gap-6 md:gap-10 cursor-pointer group transition-all duration-300 hover:border-white/15"
+            style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.07)" }}>
+            <div className="text-5xl shrink-0">⚡</div>
+            <div className="flex-1 text-center md:text-left">
+              <p className="text-[10px] font-mono text-zinc-600 uppercase tracking-widest mb-2">New · Batch Mode</p>
+              <h3 className="text-2xl font-bold tracking-[-0.03em] mb-2">10 reports in 10 minutes.</h3>
+              <p className="text-zinc-500 text-[15px]">
+                Paste a list of companies, people, or ideas. Pick an agent. Get every result at once — export as CSV or Markdown.
+              </p>
+            </div>
+            <div className="shrink-0 text-sm text-zinc-600 group-hover:text-white transition-colors whitespace-nowrap">
+              Try Batch Mode →
+            </div>
+          </div>
+        </Link>
       </section>
 
       {/* ── API Waitlist ─────────────────────── */}
