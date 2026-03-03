@@ -13,6 +13,7 @@ const AGENT_PRICES: Record<string, { name: string; price: number; icon: string }
   "investor-research":   { name: "Investor Research Agent",   price: 100, icon: "💼" },
   "startup-validator":   { name: "Startup Idea Validator",    price: 75,  icon: "🚀" },
   "roast-startup":       { name: "Roast My Startup",          price: 50,  icon: "🔥" },
+  "api-detective":       { name: "API Detective Agent",        price: 500, icon: "🕵️" },
 };
 
 export async function POST(req: NextRequest) {

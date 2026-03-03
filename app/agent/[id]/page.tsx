@@ -11,6 +11,7 @@ const agentData: Record<string, {
   name: string; description: string; icon: string; price: string;
   priceInt: number; placeholder: string; inputLabel: string;
   speed: string; examples: string[]; color: string;
+  inputType?: "text" | "image";
 }> = {
   "web-research": {
     name: "Web Research Agent", description: "Searches the web and returns a clean, sourced brief.",
@@ -68,6 +69,15 @@ const agentData: Record<string, {
     examples: ["AI therapist for founders", "Notion for lawyers", "Uber for dog walking"],
     color: "rgba(251,146,60,0.12)",
   },
+  "api-detective": {
+    name: "API Detective Agent", description: "Drop a screenshot of any app. Get a full breakdown of every API, SDK, and service they're using.",
+    icon: "🕵️", price: "$5.00", priceInt: 500,
+    placeholder: "Optional: describe the app (e.g. 'Stripe checkout page')",
+    inputLabel: "Upload a screenshot", speed: "~15s",
+    examples: ["Stripe checkout", "Notion dashboard", "Linear issue tracker"],
+    color: "rgba(139,92,246,0.12)",
+    inputType: "image",
+  },
 };
 
 // ── Execution steps per agent ────────────────────────────
@@ -113,6 +123,12 @@ const agentSteps: Record<string, string[]> = {
     "Scanning VC funding in this space...",
     "Sharpening the roast...",
     "Delivering brutal feedback...",
+  ],
+  "api-detective": [
+    "Analyzing screenshot with Claude Vision...",
+    "Identifying APIs and services...",
+    "Researching detected technologies...",
+    "Writing detective report...",
   ],
 };
 
@@ -181,9 +197,16 @@ export default function AgentPage() {
   const [paymentStatus, setPaymentStatus] = useState<"idle" | "verifying" | "paid" | "failed">("idle");
   const [freeUsed, setFreeUsed] = useState(false);
   const [visibleSteps, setVisibleSteps] = useState<string[]>([]);
+  const [imageBase64, setImageBase64] = useState("");
+  const [imageMimeType, setImageMimeType] = useState("image/png");
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [imageDragOver, setImageDragOver] = useState(false);
 
   const resultRef = useRef<HTMLDivElement>(null);
   const stepTimers = useRef<ReturnType<typeof setTimeout>[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const isImageAgent = agent?.inputType === "image";
 
   const stripeEnabled = !!process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
   const qParam = searchParams.get("q");
@@ -216,8 +239,25 @@ export default function AgentPage() {
     setVisibleSteps([]);
   }
 
+  function handleImageFile(file: File) {
+    const validTypes = ["image/png", "image/jpeg", "image/webp", "image/gif"];
+    if (!validTypes.includes(file.type)) { setError("Please upload a PNG, JPG, or WebP screenshot."); return; }
+    setImageMimeType(file.type);
+    setError(null);
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const dataUrl = e.target?.result as string;
+      setImagePreview(dataUrl);
+      setImageBase64(dataUrl.split(",")[1]);
+      if (!input) setInput(file.name.replace(/\.[^/.]+$/, ""));
+    };
+    reader.readAsDataURL(file);
+  }
+
   const runAgent = useCallback(async (taskInput: string, isFree = false) => {
-    if (!taskInput.trim() || loading) return;
+    if (loading) return;
+    if (!isImageAgent && !taskInput.trim()) return;
+    if (isImageAgent && !imageBase64) { setError("Please upload a screenshot first."); return; }
     if (isFree) markFreeTrial(id);
     setFreeUsed(true);
     setLoading(true);
@@ -226,10 +266,15 @@ export default function AgentPage() {
     setError(null);
     startSteps();
     try {
+      const body: Record<string, string> = { input: taskInput };
+      if (isImageAgent && imageBase64) {
+        body.imageData = imageBase64;
+        body.mimeType = imageMimeType;
+      }
       const res = await fetch(`/api/agents/${id}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ input: taskInput }),
+        body: JSON.stringify(body),
       });
       if (!res.ok) { const d = await res.json(); throw new Error(d.error || "Agent failed"); }
       const reader = res.body!.getReader();
@@ -253,7 +298,7 @@ export default function AgentPage() {
       setLoading(false);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [id, loading, agent, addRun]);
+  }, [id, loading, agent, addRun, isImageAgent, imageBase64, imageMimeType]);
 
   // Handle Stripe redirect return
   const sessionId = searchParams.get("session_id");
@@ -280,7 +325,8 @@ export default function AgentPage() {
   }, [sessionId]);
 
   async function handleRun() {
-    if (!input.trim()) return;
+    if (!isImageAgent && !input.trim()) return;
+    if (isImageAgent && !imageBase64) { setError("Please upload a screenshot first."); return; }
     const isFree = !freeUsed;
 
     // Always run free if stripe not configured, or if first run
@@ -445,26 +491,75 @@ export default function AgentPage() {
           <label className="block text-xs text-zinc-500 font-medium mb-3 uppercase tracking-wider">
             {agent.inputLabel}
           </label>
-          <textarea
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) handleRun(); }}
-            placeholder={agent.placeholder}
-            rows={3}
-            className="w-full text-sm text-white placeholder-zinc-700 resize-none outline-none bg-transparent leading-relaxed"
-          />
+
+          {isImageAgent ? (
+            <div className="space-y-3">
+              {/* Drop zone */}
+              <div
+                onClick={() => fileInputRef.current?.click()}
+                onDragOver={(e) => { e.preventDefault(); setImageDragOver(true); }}
+                onDragLeave={() => setImageDragOver(false)}
+                onDrop={(e) => { e.preventDefault(); setImageDragOver(false); const f = e.dataTransfer.files[0]; if (f) handleImageFile(f); }}
+                className="rounded-[14px] flex flex-col items-center justify-center cursor-pointer transition-all duration-200 overflow-hidden"
+                style={{
+                  border: `2px dashed ${imageDragOver ? "rgba(139,92,246,0.6)" : imagePreview ? "rgba(139,92,246,0.3)" : "rgba(255,255,255,0.1)"}`,
+                  background: imageDragOver ? "rgba(139,92,246,0.05)" : "rgba(255,255,255,0.02)",
+                  minHeight: imagePreview ? "auto" : "120px",
+                }}>
+                {imagePreview ? (
+                  <div className="relative w-full">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={imagePreview} alt="Screenshot preview" className="w-full rounded-[12px] object-contain max-h-64" />
+                    <div className="absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity rounded-[12px]"
+                      style={{ background: "rgba(0,0,0,0.6)" }}>
+                      <span className="text-xs text-white font-medium">Click to replace</span>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="py-8 text-center px-4">
+                    <div className="text-3xl mb-2">📎</div>
+                    <p className="text-sm text-zinc-500 mb-1">Drop screenshot here</p>
+                    <p className="text-xs text-zinc-700">PNG, JPG, WebP · any app or website</p>
+                  </div>
+                )}
+              </div>
+              <input ref={fileInputRef} type="file" accept="image/png,image/jpeg,image/webp,image/gif"
+                className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleImageFile(f); }} />
+              {/* Optional context */}
+              <input
+                type="text"
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                placeholder="Optional: describe the app (e.g. 'Stripe checkout page')"
+                className="w-full text-sm text-white placeholder-zinc-700 outline-none bg-transparent py-2 px-3 rounded-xl"
+                style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)" }}
+              />
+            </div>
+          ) : (
+            <textarea
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) handleRun(); }}
+              placeholder={agent.placeholder}
+              rows={3}
+              className="w-full text-sm text-white placeholder-zinc-700 resize-none outline-none bg-transparent leading-relaxed"
+            />
+          )}
+
           <div className="flex items-center justify-between mt-4 pt-3.5"
             style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}>
-            <span className="text-[11px] text-zinc-700 hidden md:block">⌘ Enter to run</span>
+            <span className="text-[11px] text-zinc-700 hidden md:block">
+              {isImageAgent ? (imagePreview ? "✓ Screenshot ready" : "Upload a screenshot to start") : "⌘ Enter to run"}
+            </span>
             <button
               onClick={handleRun}
-              disabled={loading || paying || !input.trim()}
+              disabled={loading || paying || (isImageAgent ? !imageBase64 : !input.trim())}
               className="btn-violet px-5 py-2 text-sm disabled:opacity-30 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none flex items-center gap-2 ml-auto">
-              {paying ? "Redirecting…" : loading ? "Running…" : isFreeRun ? (
+              {paying ? "Redirecting…" : loading ? (isImageAgent ? "Detecting…" : "Running…") : isFreeRun ? (
                 <>Try free <span className="opacity-60">·</span> <span className="text-emerald-300">$0</span></>
               ) : (
                 <>
-                  {stripeEnabled ? "Pay & Run" : "Run"}
+                  {isImageAgent ? "Detect APIs" : stripeEnabled ? "Pay & Run" : "Run"}
                   <span className="opacity-60">·</span>
                   <span>{agent.price}</span>
                 </>

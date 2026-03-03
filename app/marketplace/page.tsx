@@ -68,6 +68,15 @@ const agents = [
     examples: ["AI therapist for founders", "Notion for lawyers", "Uber for dog walking"],
     badge: "Hot",
   },
+  {
+    id: "api-detective",
+    name: "API Detective Agent",
+    description: "Drop a screenshot of any app. Get a full breakdown of every API, SDK, and third-party service they're using — plus what each choice reveals about their stack.",
+    tags: ["Research", "Strategy"],
+    price: "$5.00", priceUnit: "per detection", icon: "🕵️", speed: "~15s",
+    examples: ["Stripe checkout screenshot", "Notion app screenshot", "Linear dashboard"],
+    badge: "New",
+  },
 ];
 
 const FILTERS = ["All", "Research", "Finance", "Sales", "Strategy", "Fundraising"];
