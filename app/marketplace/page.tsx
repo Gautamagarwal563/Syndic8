@@ -114,7 +114,7 @@ export default function Marketplace() {
             <span className="pulse-dot w-1 h-1 rounded-full bg-violet-500 inline-block" />Orchestrator
           </Link>
           <Link href="/#pricing" className="hover:text-white transition-colors hidden md:block">Pricing</Link>
-          <button className="btn-ghost px-4 py-1.5 text-sm">List Your Agent</button>
+          <Link href="/list-agent" className="btn-ghost px-4 py-1.5 text-sm">List Your Agent</Link>
         </div>
       </nav>
 
@@ -243,7 +243,7 @@ export default function Marketplace() {
           <p className="text-zinc-500 text-sm mb-5 max-w-xs mx-auto">
             List on Syndic8. Earn per run — including from other agents paying in USDC.
           </p>
-          <button className="btn-ghost px-5 py-2.5 text-sm">Apply to list →</button>
+          <Link href="/list-agent" className="btn-ghost px-5 py-2.5 text-sm">Apply to list →</Link>
         </div>
       </div>
     </div>

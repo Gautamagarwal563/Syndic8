@@ -2,13 +2,17 @@ import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: "2025-01-27.acacia",
+  apiVersion: "2026-02-25.clover",
 });
 
 const AGENT_PRICES: Record<string, { name: string; price: number; icon: string }> = {
-  "web-research":    { name: "Web Research Agent",    price: 50,  icon: "🔍" },
-  "due-diligence":  { name: "Due Diligence Agent",   price: 200, icon: "📊" },
-  "lead-enrichment":{ name: "Lead Enrichment Agent", price: 25,  icon: "🎯" },
+  "web-research":        { name: "Web Research Agent",        price: 50,  icon: "🔍" },
+  "due-diligence":       { name: "Due Diligence Agent",       price: 200, icon: "📊" },
+  "lead-enrichment":     { name: "Lead Enrichment Agent",     price: 25,  icon: "🎯" },
+  "competitor-analysis": { name: "Competitor Analysis Agent", price: 150, icon: "⚔️" },
+  "investor-research":   { name: "Investor Research Agent",   price: 100, icon: "💼" },
+  "startup-validator":   { name: "Startup Idea Validator",    price: 75,  icon: "🚀" },
+  "roast-startup":       { name: "Roast My Startup",          price: 50,  icon: "🔥" },
 };
 
 export async function POST(req: NextRequest) {

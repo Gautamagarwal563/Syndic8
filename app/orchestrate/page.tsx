@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useCallback } from "react";
 import Link from "next/link";
 import Logo from "../components/Logo";
 import CursorGlow from "../components/CursorGlow";
@@ -24,7 +24,7 @@ const EXAMPLE_TASKS = [
 type OrchestratorEvent =
   | { type: "thinking"; message: string }
   | { type: "plan"; agents: string[]; totalCost: string }
-  | { type: "hiring"; agentId: string; agentName: string; icon: string; cost: string; txHash: string; walletBefore: string; walletAfter: string; network: string }
+  | { type: "hiring"; agentId: string; agentName: string; icon: string; cost: string; txHash: string; basescanUrl?: string; walletBefore: string; walletAfter: string; network: string }
   | { type: "agent_start"; agentId: string; agentName: string }
   | { type: "chunk"; agentId: string; content: string }
   | { type: "agent_done"; agentId: string; agentName: string; cost: string; txHash: string }
@@ -63,13 +63,33 @@ export default function OrchestratePage() {
   const [agentResults, setAgentResults] = useState<Record<string, string>>({});
   const [agentNames, setAgentNames] = useState<Record<string, string>>({});
   const [agentIcons, setAgentIcons] = useState<Record<string, string>>({});
-  const [transactions, setTransactions] = useState<{ agent: string; icon: string; cost: string; txHash: string }[]>([]);
+  const [transactions, setTransactions] = useState<{ agent: string; icon: string; cost: string; txHash: string; basescanUrl?: string }[]>([]);
+  const [synthCopied, setSynthCopied] = useState(false);
   const [synthesis, setSynthesis] = useState("");
   const [stats, setStats] = useState<{ totalCost: string; agentsHired: number; txCount: number } | null>(null);
   const [currentAgent, setCurrentAgent] = useState<string | null>(null);
 
   const logRef = useRef<HTMLDivElement>(null);
   const synthRef = useRef<HTMLDivElement>(null);
+
+  const handleCopySynthesis = useCallback(() => {
+    if (!synthesis) return;
+    navigator.clipboard.writeText(synthesis);
+    setSynthCopied(true);
+    setTimeout(() => setSynthCopied(false), 2000);
+  }, [synthesis]);
+
+  function handleExportSynthesis() {
+    if (!synthesis) return;
+    const header = `# Syndic8 Orchestrator Report\n**Task:** ${task}\n**Date:** ${new Date().toLocaleDateString()}\n**Agents hired:** ${stats?.agentsHired ?? 0} · **Total cost:** ${stats?.totalCost ?? "0.00"} USDC\n\n---\n\n`;
+    const blob = new Blob([header + synthesis], { type: "text/markdown" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `syndic8-report-${Date.now()}.md`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
 
   function addLog(node: React.ReactNode) {
     setLogLines(prev => [...prev, node]);
@@ -156,6 +176,7 @@ export default function OrchestratePage() {
           icon: event.icon,
           cost: event.cost,
           txHash: event.txHash,
+          basescanUrl: event.basescanUrl,
         }]);
         addLog(
           <span>
@@ -383,7 +404,14 @@ export default function OrchestratePage() {
                           <span className="text-zinc-400">{tx.icon} {tx.agent}</span>
                           <span className="text-emerald-400 font-mono">-{tx.cost} USDC</span>
                         </div>
-                        <div className="text-zinc-700 font-mono text-[10px] truncate">{tx.txHash}</div>
+                        {tx.basescanUrl ? (
+                          <a href={tx.basescanUrl} target="_blank" rel="noopener noreferrer"
+                            className="text-zinc-700 font-mono text-[10px] truncate block hover:text-violet-400 transition-colors">
+                            {tx.txHash.slice(0, 20)}…↗
+                          </a>
+                        ) : (
+                          <div className="text-zinc-700 font-mono text-[10px] truncate">{tx.txHash.slice(0, 20)}…</div>
+                        )}
                       </div>
                     ))}
                   </div>
@@ -470,7 +498,19 @@ export default function OrchestratePage() {
                       {done ? "Synthesis complete" : "Synthesizing…"}
                     </span>
                     {done && stats && (
-                      <span className="ml-auto text-xs text-emerald-400 font-mono">{stats.totalCost} USDC total</span>
+                      <>
+                        <span className="text-xs text-emerald-400 font-mono ml-2">{stats.totalCost} USDC total</span>
+                        <div className="ml-auto flex items-center gap-3">
+                          <button onClick={handleCopySynthesis}
+                            className="text-xs text-zinc-600 hover:text-white transition-colors">
+                            {synthCopied ? "✓ Copied" : "Copy"}
+                          </button>
+                          <button onClick={handleExportSynthesis}
+                            className="text-xs text-zinc-600 hover:text-white transition-colors hidden md:block">
+                            Export .md
+                          </button>
+                        </div>
+                      </>
                     )}
                   </div>
                   <div ref={synthRef} className="p-6 md:p-8" style={{ background: "rgba(0,0,0,0.4)" }}>

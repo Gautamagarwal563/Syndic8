@@ -15,8 +15,10 @@ export async function POST(req: NextRequest) {
     const searchResults = await firecrawl.search(input, { limit: 6 });
     const webResults = searchResults.web ?? [];
     const sources = webResults
-      .map((r: { url: string; title?: string; description?: string }) =>
-        `URL: ${r.url}\nTitle: ${r.title || "Untitled"}\nSummary: ${r.description || ""}`)
+      .map((r) => {
+        const item = r as { url?: string; title?: string; description?: string };
+        return `URL: ${item.url || ""}\nTitle: ${item.title || "Untitled"}\nSummary: ${item.description || ""}`;
+      })
       .join("\n\n---\n\n");
 
     const stream = new ReadableStream({

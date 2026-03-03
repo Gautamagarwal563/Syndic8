@@ -20,9 +20,10 @@ export async function POST(req: NextRequest) {
     const sources = [
       ...(existingRes.web ?? []),
       ...(fundingRes.web ?? []),
-    ].map((r: { url: string; title?: string; description?: string }) =>
-      `URL: ${r.url}\nTitle: ${r.title || ""}\nSummary: ${r.description || ""}`
-    ).join("\n\n---\n\n");
+    ].map((r) => {
+      const item = r as { url?: string; title?: string; description?: string };
+      return `URL: ${item.url || ""}\nTitle: ${item.title || ""}\nSummary: ${item.description || ""}`;
+    }).join("\n\n---\n\n");
 
     const stream = new ReadableStream({
       async start(controller) {
