@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
 import { sendUSDC, AGENT_WALLETS, ORCHESTRATOR_ADDRESS, BASESCAN_URL } from "../../../lib/blockchain";
+import { runAgent } from "../../../lib/run-agent";
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
@@ -80,7 +81,6 @@ Return ONLY a JSON array. Example: ["web-research", "due-diligence"]`,
 
         // Step 2: Hire and run each agent
         const results: Record<string, string> = {};
-        const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
         let walletBalance = 10.00;
 
         for (const agentId of agentIds) {
@@ -122,27 +122,12 @@ Return ONLY a JSON array. Example: ["web-research", "due-diligence"]`,
           walletBalance -= info.cost;
 
           try {
-            const agentRes = await fetch(`${baseUrl}/api/agents/${agentId}`, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ input: task }),
-            });
-
-            if (!agentRes.ok) throw new Error("Agent failed");
-
-            const reader = agentRes.body!.getReader();
-            const decoder = new TextDecoder();
-            let fullText = "";
-
             send(controller, encoder, { type: "agent_start", agentId, agentName: info.name });
 
-            while (true) {
-              const { done, value } = await reader.read();
-              if (done) break;
-              const chunk = decoder.decode(value, { stream: true });
-              fullText += chunk;
+            // Call agent logic directly — no internal HTTP hop
+            const fullText = await runAgent(agentId, task, (chunk) => {
               send(controller, encoder, { type: "chunk", agentId, content: chunk });
-            }
+            });
 
             results[agentId] = fullText;
             send(controller, encoder, {
@@ -153,8 +138,13 @@ Return ONLY a JSON array. Example: ["web-research", "due-diligence"]`,
               txHash,
             });
 
-          } catch {
-            send(controller, encoder, { type: "agent_error", agentId });
+          } catch (err) {
+            console.error(`Agent ${agentId} failed:`, err);
+            send(controller, encoder, {
+              type: "agent_error",
+              agentId,
+              message: err instanceof Error ? err.message : "Agent failed",
+            });
           }
         }
 

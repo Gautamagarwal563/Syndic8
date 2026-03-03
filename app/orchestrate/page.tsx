@@ -28,7 +28,7 @@ type OrchestratorEvent =
   | { type: "agent_start"; agentId: string; agentName: string }
   | { type: "chunk"; agentId: string; content: string }
   | { type: "agent_done"; agentId: string; agentName: string; cost: string; txHash: string }
-  | { type: "agent_error"; agentId: string }
+  | { type: "agent_error"; agentId: string; message?: string }
   | { type: "synthesizing"; walletBalance: string }
   | { type: "synthesis_chunk"; content: string }
   | { type: "complete"; totalCost: string; agentsHired: number; walletBalance: string; txCount: number }
@@ -212,7 +212,12 @@ export default function OrchestratePage() {
 
       case "agent_error":
         setCurrentAgent(null);
-        addLog(<span className="text-red-400/70">✗ Agent {event.agentId} failed</span>);
+        addLog(
+          <span className="text-red-400/70">
+            ✗ {agentNames[event.agentId] ?? event.agentId} failed
+            {event.message ? <span className="text-zinc-600"> · {event.message}</span> : null}
+          </span>
+        );
         break;
 
       case "synthesizing":
