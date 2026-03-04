@@ -335,10 +335,12 @@ export default function BatchPage() {
                     }}>
 
                     {/* Row header */}
-                    <button
+                    <div
+                      role="button"
+                      tabIndex={isDone ? 0 : -1}
                       onClick={() => isDone && setExpandedId(isExpanded ? null : item.id)}
-                      className="w-full flex items-center gap-4 px-5 py-4 text-left"
-                      disabled={!isDone}>
+                      onKeyDown={e => e.key === "Enter" && isDone && setExpandedId(isExpanded ? null : item.id)}
+                      className={`w-full flex items-center gap-4 px-5 py-4 text-left${isDone ? " cursor-pointer" : " cursor-default"}`}>
                       {/* Index */}
                       <span className="text-xs font-mono text-zinc-700 w-5 shrink-0">
                         {String(idx + 1).padStart(2, "0")}
@@ -385,7 +387,7 @@ export default function BatchPage() {
                           <span className="text-zinc-700 text-xs">{isExpanded ? "↑" : "↓"}</span>
                         </div>
                       )}
-                    </button>
+                    </div>
 
                     {/* Expanded result */}
                     {isExpanded && isDone && (
