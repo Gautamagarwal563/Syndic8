@@ -173,7 +173,7 @@ export default function Home() {
       <section className="relative max-w-4xl mx-auto px-6 py-20">
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
           {[
-            { end: 6, suffix: "", label: "Live agents", sub: "More coming soon" },
+            { end: 13, suffix: "", label: "Live agents", sub: "More coming soon" },
             { end: 10, suffix: "s", label: "Avg response time", sub: "Per task" },
             { end: 2, suffix: "", label: "Payment rails", sub: "Stripe + USDC on Base" },
           ].map((s) => (
