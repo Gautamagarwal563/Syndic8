@@ -78,6 +78,46 @@ const agentData: Record<string, {
     color: "rgba(139,92,246,0.12)",
     inputType: "image",
   },
+  "cold-email": {
+    name: "Cold Email Writer", description: "Name + context in. A ready-to-send, hyper-personalized cold email out — with subject line, body, and PS.",
+    icon: "✉️", price: "$1.00", priceInt: 100,
+    placeholder: "e.g. Sam Altman, OpenAI — pitching AI infra partnership",
+    inputLabel: "Who are you emailing and why?", speed: "~10s",
+    examples: ["Sam Altman, OpenAI — pitching AI infra", "Garry Tan, YC — applying for W26", "Jensen Huang, NVIDIA — partnership"],
+    color: "rgba(59,130,246,0.12)",
+  },
+  "hn-pulse": {
+    name: "HackerNews Pulse", description: "Topic or company in. Real-time HN sentiment out — what the technical community actually thinks.",
+    icon: "🔶", price: "$0.75", priceInt: 75,
+    placeholder: "e.g. Cursor editor, or: OpenAI o3",
+    inputLabel: "Topic, product, or company", speed: "~8s",
+    examples: ["Cursor editor", "OpenAI o3", "Vercel"],
+    color: "rgba(251,146,60,0.12)",
+  },
+  "github-intel": {
+    name: "GitHub Repo Intelligence", description: "GitHub URL in. Full repo analysis — health, momentum, bus factor, and a straight verdict on project trajectory.",
+    icon: "🐙", price: "$2.00", priceInt: 200,
+    placeholder: "e.g. github.com/vercel/next.js or vercel/next.js",
+    inputLabel: "GitHub repo URL or owner/repo", speed: "~12s",
+    examples: ["github.com/vercel/next.js", "anthropics/anthropic-sdk-python", "facebook/react"],
+    color: "rgba(99,102,241,0.12)",
+  },
+  "tos-analyzer": {
+    name: "TOS Analyzer", description: "Any URL in. Plain English breakdown of what you actually agreed to — red flags, data collection, and a verdict.",
+    icon: "📋", price: "$1.00", priceInt: 100,
+    placeholder: "e.g. https://twitter.com/tos or OpenAI terms of service",
+    inputLabel: "TOS URL or service name", speed: "~12s",
+    examples: ["https://twitter.com/tos", "OpenAI terms of service", "Notion privacy policy"],
+    color: "rgba(239,68,68,0.1)",
+  },
+  "job-board-intel": {
+    name: "Job Board Intelligence", description: "Company name in. Read their job listings like a strategy consultant — what they're building and where they're headed.",
+    icon: "📌", price: "$0.75", priceInt: 75,
+    placeholder: "e.g. Perplexity AI, or Linear",
+    inputLabel: "Company name", speed: "~10s",
+    examples: ["Perplexity AI", "Linear", "Vercel"],
+    color: "rgba(16,185,129,0.1)",
+  },
 };
 
 // ── Execution steps per agent ────────────────────────────
@@ -129,6 +169,36 @@ const agentSteps: Record<string, string[]> = {
     "Identifying APIs and services...",
     "Researching detected technologies...",
     "Writing detective report...",
+  ],
+  "cold-email": [
+    "Researching their background...",
+    "Scanning recent activity...",
+    "Crafting personalized opening...",
+    "Writing the email...",
+  ],
+  "hn-pulse": [
+    "Querying HN Algolia API...",
+    "Fetching top stories and comments...",
+    "Analyzing community sentiment...",
+    "Writing pulse report...",
+  ],
+  "github-intel": [
+    "Fetching repo metadata...",
+    "Analyzing contributors and commits...",
+    "Assessing health and momentum...",
+    "Writing repo intelligence report...",
+  ],
+  "tos-analyzer": [
+    "Fetching Terms of Service...",
+    "Parsing legal language...",
+    "Flagging red flags and clauses...",
+    "Writing plain-English breakdown...",
+  ],
+  "job-board-intel": [
+    "Searching job listings...",
+    "Scanning hiring patterns...",
+    "Reading strategic signals...",
+    "Writing intelligence report...",
   ],
 };
 

@@ -142,6 +142,121 @@ export async function runAgent(
       );
     }
 
+    case "cold-email": {
+      const [profileRes, companyRes, recentRes] = await Promise.all([
+        firecrawl.search(`${t} LinkedIn background career`, { limit: 3 }),
+        firecrawl.search(`${t} company product news 2025`, { limit: 3 }),
+        firecrawl.search(`${t} recent interview blog post 2024 2025`, { limit: 2 }),
+      ]);
+      const sources = [...(profileRes.web ?? []), ...(companyRes.web ?? []), ...(recentRes.web ?? [])]
+        .map((r) => { const item = r as { title?: string; description?: string }; return `${item.title || ""}: ${item.description || ""}`; })
+        .join("\n\n");
+      return streamClaude(
+        `You are a world-class cold email writer. You write emails that get replies — specific, human, no fluff.\n\nRules:\n- Output the email exactly as it should be sent — Subject line first, then body\n- No preamble, just the email itself\n- Subject line: under 8 words, curiosity-driven, no clickbait\n- Opening: reference something specific and real about them\n- Body: 3-4 sentences max. One clear value prop. One specific ask.\n- CTA: one question or one specific action, never two\n- PS line: optional, make it land\n- No em dashes. Sound like a smart human.\n- Format: Subject: [line]\n\n[body]`,
+        `Write a cold email to: ${t}\n\nResearch context:\n${sources}\n\nWrite a cold email that will get a reply. Be specific to this person.`,
+        1200,
+        onChunk
+      );
+    }
+
+    case "hn-pulse": {
+      const query = encodeURIComponent(t);
+      const [storiesRes, commentsRes] = await Promise.all([
+        fetch(`https://hn.algolia.com/api/v1/search?query=${query}&tags=story&hitsPerPage=10`),
+        fetch(`https://hn.algolia.com/api/v1/search?query=${query}&tags=comment&hitsPerPage=15`),
+      ]);
+      const [storiesData, commentsData] = await Promise.all([storiesRes.json(), commentsRes.json()]);
+      interface HNHit { objectID: string; title?: string; story_text?: string; comment_text?: string; url?: string; points?: number; num_comments?: number; author?: string; }
+      const stories: HNHit[] = storiesData.hits ?? [];
+      const comments: HNHit[] = commentsData.hits ?? [];
+      const storyContext = stories.slice(0, 8).map(s =>
+        `STORY [${s.points ?? 0} pts, ${s.num_comments ?? 0} comments]: "${s.title || ""}"\nURL: ${s.url || `https://news.ycombinator.com/item?id=${s.objectID}`}`
+      ).join("\n\n---\n\n");
+      const commentContext = comments.slice(0, 10).map(c =>
+        `COMMENT by ${c.author || "anon"}: "${(c.comment_text || "").replace(/<[^>]*>/g, "").slice(0, 300)}"`
+      ).join("\n\n");
+      return streamClaude(
+        `You are a Hacker News analyst. You read the technical community's pulse with precision.\n\nRules:\n- Prose only. No bullet points. No ## headers.\n- Bold labels like **What HN thinks.** start each section.\n- Be specific — quote actual comments, cite real thread titles, mention point counts.\n- End with a "Community verdict" — one sentence.\n- Max 380 words.`,
+        `Analyze Hacker News sentiment for: "${t}"\n\nTotal HN stories found: ${storiesData.nbHits ?? 0}\n\nTop stories:\n${storyContext || "No major stories found."}\n\nSample community comments:\n${commentContext || "No significant comment threads found."}\n\nWrite a HN Pulse report. Cover what the community is saying, overall sentiment, most interesting threads, and what the activity level signals.`,
+        1400,
+        onChunk
+      );
+    }
+
+    case "github-intel": {
+      const cleaned = t.replace(/\/$/, "");
+      const urlMatch = cleaned.match(/github\.com\/([^/]+)\/([^/\s]+)/);
+      const shortMatch = cleaned.match(/^([^/\s]+)\/([^/\s]+)$/);
+      const parsed = urlMatch ? { owner: urlMatch[1], repo: urlMatch[2] } : shortMatch ? { owner: shortMatch[1], repo: shortMatch[2] } : null;
+      if (!parsed) throw new Error("Invalid GitHub URL or owner/repo format");
+      const { owner, repo } = parsed;
+      const base = `https://api.github.com/repos/${owner}/${repo}`;
+      const ghHeaders: Record<string, string> = { "Accept": "application/vnd.github+json", "X-GitHub-Api-Version": "2022-11-28" };
+      if (process.env.GITHUB_TOKEN) ghHeaders["Authorization"] = `Bearer ${process.env.GITHUB_TOKEN}`;
+      const ghFetch = async (url: string) => { const r = await fetch(url, { headers: ghHeaders }); return r.ok ? r.json() : null; };
+      const [repoData, contributors, languages, commits, releases] = await Promise.all([
+        ghFetch(base), ghFetch(`${base}/contributors?per_page=10`), ghFetch(`${base}/languages`),
+        ghFetch(`${base}/commits?per_page=15`), ghFetch(`${base}/releases?per_page=5`),
+      ]);
+      if (!repoData) throw new Error("Repository not found or is private");
+      const languageList = languages ? Object.entries(languages as Record<string, number>).sort(([,a],[,b]) => b-a).map(([lang]) => lang).join(", ") : "Unknown";
+      const topContributors = (contributors as Array<{ login: string; contributions: number }> | null)?.slice(0,5).map(c => `@${c.login} (${c.contributions})`).join(", ") || "No data";
+      const recentCommits = (commits as Array<{ commit: { message: string; author: { date: string } } }> | null)?.slice(0,8).map(c => `- ${c.commit.message.split("\n")[0].slice(0,80)} (${c.commit.author?.date?.slice(0,10)})`).join("\n") || "No recent commits";
+      const latestRelease = (releases as Array<{ tag_name: string; published_at: string; name: string }> | null)?.[0];
+      const context = `Repository: ${owner}/${repo}\nDescription: ${repoData.description || "None"}\nStars: ${repoData.stargazers_count} | Forks: ${repoData.forks_count}\nOpen Issues: ${repoData.open_issues_count}\nLanguages: ${languageList}\nCreated: ${repoData.created_at?.slice(0,10)} | Last Push: ${repoData.pushed_at?.slice(0,10)}\nLicense: ${repoData.license?.name || "None"}\nArchived: ${repoData.archived ? "YES" : "No"}\nTop contributors: ${topContributors}\nLatest release: ${latestRelease ? `${latestRelease.tag_name} (${latestRelease.published_at?.slice(0,10)})` : "No releases"}\nRecent commits:\n${recentCommits}`;
+      return streamClaude(
+        `You are a senior engineering analyst who reads GitHub repos like a doctor reading a patient chart.\n\nRules:\n- Prose only. No bullet points. No ## headers.\n- Bold labels like **Project health.** start each section.\n- Be specific with numbers — stars, commit velocity, contributor count.\n- Assess bus factor honestly.\n- End with a "Repo verdict" — one sentence.\n- Max 420 words.`,
+        `Analyze this GitHub repository: ${owner}/${repo}\n\n${context}\n\nCover: what this project does, health and momentum, bus factor risk, what recent commits reveal, and the tech stack. End with your repo verdict.`,
+        1600,
+        onChunk
+      );
+    }
+
+    case "tos-analyzer": {
+      let tosContent = "";
+      const isUrl = t.startsWith("http://") || t.startsWith("https://");
+      if (isUrl) {
+        try {
+          const scraped = await (firecrawl as unknown as { scrapeUrl: (url: string, opts: object) => Promise<{ markdown?: string }> }).scrapeUrl(t, { formats: ["markdown"] });
+          tosContent = scraped.markdown?.slice(0, 8000) || "";
+        } catch { /* fallback */ }
+      }
+      if (!tosContent) {
+        const [tosRes, privacyRes] = await Promise.all([
+          firecrawl.search(`${t} terms of service user agreement`, { limit: 3 }),
+          firecrawl.search(`${t} privacy policy data collection`, { limit: 3 }),
+        ]);
+        tosContent = [...(tosRes.web ?? []), ...(privacyRes.web ?? [])]
+          .map((r) => { const item = r as { title?: string; description?: string }; return `${item.title || ""}: ${item.description || ""}`; })
+          .join("\n\n");
+      }
+      if (!tosContent.trim()) throw new Error("Could not retrieve Terms of Service for this URL.");
+      return streamClaude(
+        `You are a plain-English legal analyst. You read Terms of Service and tell people exactly what they agreed to.\n\nRules:\n- Prose only. No bullet points. No ## headers.\n- Bold labels like **What they collect.** start each section.\n- Don't sugarcoat red flags.\n- Rate each area: 🟢 fair / 🟡 watch out / 🔴 red flag\n- End with an "Overall verdict" — one sentence.\n- Max 420 words.`,
+        `Analyze the Terms of Service for: ${t}\n\nTOS/Privacy content:\n${tosContent}\n\nCover: data collection, what they can do with your data, account termination, arbitration clauses, auto-renewal, and biggest red flags. Use emoji ratings. End with your verdict.`,
+        1600,
+        onChunk
+      );
+    }
+
+    case "job-board-intel": {
+      const company = t;
+      const [jobsRes, careersRes, linkedinRes] = await Promise.all([
+        firecrawl.search(`${company} jobs hiring 2025 site:greenhouse.io OR site:lever.co OR site:ashbyhq.com`, { limit: 5 }),
+        firecrawl.search(`${company} careers open roles engineering product 2025`, { limit: 4 }),
+        firecrawl.search(`${company} hiring LinkedIn jobs engineering design`, { limit: 3 }),
+      ]);
+      const sources = [...(jobsRes.web ?? []), ...(careersRes.web ?? []), ...(linkedinRes.web ?? [])]
+        .map((r) => { const item = r as { url?: string; title?: string; description?: string }; return `LISTING: ${item.title || ""}\n${item.description || ""}\nURL: ${item.url || ""}`; })
+        .join("\n\n---\n\n");
+      return streamClaude(
+        `You are a competitive intelligence analyst who reads job postings like a seasoned investor reads financial statements.\n\nRules:\n- Prose only. No bullet points. No ## headers.\n- Bold labels like **What they're building.** start each section.\n- Be specific — name actual roles, infer from job titles what product decisions they've made.\n- End with a "Strategic read" — one sentence on what this hiring pattern reveals about their next 12 months.\n- Max 420 words.`,
+        `Analyze the job postings and hiring activity for: ${company}\n\nJob listings found:\n${sources || "No direct job listings found — infer from any available signals."}\n\nWrite a Job Board Intelligence report. What are they hiring most heavily? What does the role mix say about their product roadmap? End with your strategic read.`,
+        1600,
+        onChunk
+      );
+    }
+
     default:
       throw new Error(`Unknown agent: ${agentId}`);
   }

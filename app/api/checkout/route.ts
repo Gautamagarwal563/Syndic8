@@ -14,6 +14,11 @@ const AGENT_PRICES: Record<string, { name: string; price: number; icon: string }
   "startup-validator":   { name: "Startup Idea Validator",    price: 75,  icon: "🚀" },
   "roast-startup":       { name: "Roast My Startup",          price: 50,  icon: "🔥" },
   "api-detective":       { name: "API Detective Agent",        price: 500, icon: "🕵️" },
+  "cold-email":          { name: "Cold Email Writer",           price: 100, icon: "✉️" },
+  "hn-pulse":            { name: "HackerNews Pulse",            price: 75,  icon: "🔶" },
+  "github-intel":        { name: "GitHub Repo Intelligence",    price: 200, icon: "🐙" },
+  "tos-analyzer":        { name: "TOS Analyzer",                price: 100, icon: "📋" },
+  "job-board-intel":     { name: "Job Board Intelligence",      price: 75,  icon: "💼" },
 };
 
 export async function POST(req: NextRequest) {
