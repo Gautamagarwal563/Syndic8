@@ -278,7 +278,7 @@ export default function AgentPage() {
 
   const isImageAgent = agent?.inputType === "image";
 
-  const stripeEnabled = !!process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
+  const stripeEnabled = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY?.startsWith("pk_") ?? false;
   const qParam = searchParams.get("q");
 
   useEffect(() => {
